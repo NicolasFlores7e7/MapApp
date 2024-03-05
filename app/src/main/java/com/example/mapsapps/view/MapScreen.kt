@@ -2,8 +2,10 @@ package com.example.mapsapps.view
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -31,6 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mapsapps.viewModel.MapsViewModel
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
 
 @Composable
@@ -38,13 +44,14 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
     val navigationController = rememberNavController()
     val scope = rememberCoroutineScope()
     val state: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    ModalNavigationDrawer(drawerState = state, gesturesEnabled = true, drawerContent = {
+    ModalNavigationDrawer(drawerState = state, gesturesEnabled = false, drawerContent = {
         ModalDrawerSheet {
             Text("DrawerTitle", modifier = Modifier.padding(16.dp))
             Divider()
             DrawerMenuItem(imageVector = Icons.Filled.Star, text = "DrawerItem1")
-            {
-
+            {scope.launch {
+                state.close()
+            }
             }
         }
     }) {
@@ -62,7 +69,7 @@ fun MapAppScafold(state: DrawerState) {
         topBar = { MapAppTopBar(state = state) },
         bottomBar = { },
         content = {
-
+            Map()
         }
 
 
@@ -96,7 +103,9 @@ private fun DrawerMenuItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onItemClick() }
+            .clickable {
+                onItemClick()
+            }
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ){
@@ -106,5 +115,24 @@ private fun DrawerMenuItem(
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(text = text)
+    }
+}
+
+@Composable
+fun Map(){
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        val itb = LatLng(41.4534265, 2.18375151)
+        val cameraPositionState = rememberCameraPositionState{
+            position = CameraPosition.fromLatLngZoom(itb, 10f)
+        }
+        GoogleMap(
+            modifier = Modifier
+                .fillMaxSize(),
+            cameraPositionState = cameraPositionState
+        )
     }
 }

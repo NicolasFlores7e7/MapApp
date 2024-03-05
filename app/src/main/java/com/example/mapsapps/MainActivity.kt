@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
                     val navigationController = rememberNavController()
                     NavHost(
                         navController = navigationController,
-                        startDestination = Routes.Login.route){
+                        startDestination = Routes.Map.route){
                         composable(Routes.Login.route){ LogInScreen(navigationController, mapsViewModel)}
                         composable(Routes.AddMarker.route){ AddMarkerScreen(navigationController, mapsViewModel) }
                         composable(Routes.Map.route){ MapAppDrawer(mapsViewModel) }
