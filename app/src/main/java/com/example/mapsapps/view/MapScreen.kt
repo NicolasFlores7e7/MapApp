@@ -33,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextAlign
@@ -42,10 +43,12 @@ import com.example.mapsapps.viewModel.MapsViewModel
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
 
 //COLOR PATELLETE https://coolors.co/03045e-0077b6-00b4d8-90e0ef-caf0f8
+// RECURSO GUAPO https://proandroiddev.com/mapping-experiences-with-google-maps-and-jetpack-compose-e0cca15c4359
 @Composable
 fun MapAppDrawer(mapsViewModel: MapsViewModel) {
     val navigationController = rememberNavController()
@@ -53,43 +56,49 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
     val state: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     ModalNavigationDrawer(
         drawerState = state,
-        gesturesEnabled = false,
+        gesturesEnabled = state.isOpen,
         drawerContent = {
-        ModalDrawerSheet(
-            drawerContainerColor = Color(0xFF8FDEED),
-            modifier = Modifier
-            .clickable { scope.launch { state.close() }}
-        ) {
-            Row(
+            ModalDrawerSheet(
+                drawerContainerColor = Color(0xFF8FDEED),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .clickable { scope.launch { state.close() } }
             ) {
-                Icon(imageVector = Icons.Filled.LocationOn, contentDescription = "Location", tint = Color(0xFF03045e))
-                Text("Marcadores",
-                    color = Color(0xFF03045e),
+                Row(
                     modifier = Modifier
-                    .padding(16.dp))
+                        .fillMaxWidth()
+                        .padding(start = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.LocationOn,
+                        contentDescription = "Location",
+                        tint = Color(0xFF03045e)
+                    )
+                    Text(
+                        "Marcadores",
+                        color = Color(0xFF03045e),
+                        modifier = Modifier
+                            .padding(16.dp)
+                    )
+                }
+
+                NavigationDrawerItem(
+                    modifier = Modifier
+                        .padding(top = 8.dp),
+                    label = { Text(text = "Marcador 1") },
+                    selected = false,
+                    colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = Color(0xFFcaf0f8),
+
+                        ),
+                    shape = RectangleShape,
+                    onClick = {
+                        scope.launch {
+                            state.close()
+                        }
+                    })
             }
-
-            NavigationDrawerItem(
-                modifier = Modifier
-                    .padding(top= 8.dp),
-                label = { Text(text = "Marcador 1") },
-                selected = false,
-                colors = NavigationDrawerItemDefaults.colors(
-                    unselectedContainerColor = Color(0xFFcaf0f8),
-
-                ),
-                shape = RectangleShape,
-                onClick = {
-                    scope.launch {
-                        state.close()
-                    }
-                })
         }
-    }
     ) {
         MapAppScafold(state)
     }
@@ -170,7 +179,13 @@ fun Map() {
             modifier = Modifier
                 .fillMaxSize(),
             cameraPositionState = cameraPositionState,
-        ){
+            uiSettings = MapUiSettings(
+                compassEnabled = true,
+                rotationGesturesEnabled = true,
+
+
+            )
+        ) {
 
         }
     }
