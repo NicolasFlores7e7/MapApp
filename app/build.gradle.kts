@@ -67,6 +67,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.android.gms:play-services-location:21.1.0")
     implementation("com.google.maps.android:maps-compose-utils:2.11.4")
+    implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
