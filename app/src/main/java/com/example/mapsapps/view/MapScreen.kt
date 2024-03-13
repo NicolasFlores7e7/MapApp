@@ -1,17 +1,24 @@
 package com.example.mapsapps.view
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
@@ -26,12 +33,12 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -50,7 +57,6 @@ import com.example.mapsapps.models.CustomMarker
 import com.example.mapsapps.viewModel.MapsViewModel
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
@@ -59,7 +65,12 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.example.mapsapps.R
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 
 //COLOR PATELLETE https://coolors.co/03045e-0077b6-00b4d8-90e0ef-caf0f8
 // RECURSO GUAPO https://proandroiddev.com/mapping-experiences-with-google-maps-and-jetpack-compose-e0cca15c4359
@@ -68,52 +79,40 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
     val navigationController = rememberNavController()
     val scope = rememberCoroutineScope()
     val state: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    ModalNavigationDrawer(
-        drawerState = state,
-        gesturesEnabled = state.isOpen,
-        drawerContent = {
-            ModalDrawerSheet(
-                drawerContainerColor = Color(0xFF8FDEED),
+    ModalNavigationDrawer(drawerState = state, gesturesEnabled = state.isOpen, drawerContent = {
+        ModalDrawerSheet(drawerContainerColor = Color(0xFF8FDEED),
+            modifier = Modifier.clickable { scope.launch { state.close() } }) {
+            Row(
                 modifier = Modifier
-                    .clickable { scope.launch { state.close() } }
+                    .fillMaxWidth()
+                    .padding(start = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.LocationOn,
-                        contentDescription = "Location",
-                        tint = Color(0xFF03045e)
-                    )
-                    Text(
-                        "Marcadores",
-                        color = Color(0xFF03045e),
-                        modifier = Modifier
-                            .padding(16.dp)
-                    )
-                }
-
-                NavigationDrawerItem(
-                    modifier = Modifier
-                        .padding(top = 8.dp),
-                    label = { Text(text = "Marcador 1") },
-                    selected = false,
-                    colors = NavigationDrawerItemDefaults.colors(
-                        unselectedContainerColor = Color(0xFFcaf0f8),
-
-                        ),
-                    shape = RectangleShape,
-                    onClick = {
-                        scope.launch {
-                            state.close()
-                        }
-                    })
+                Icon(
+                    imageVector = Icons.Filled.LocationOn,
+                    contentDescription = "Location",
+                    tint = Color(0xFF03045e)
+                )
+                Text(
+                    "Marcadores", color = Color(0xFF03045e), modifier = Modifier.padding(16.dp)
+                )
             }
+
+            NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp),
+                label = { Text(text = "Marcador 1") },
+                selected = false,
+                colors = NavigationDrawerItemDefaults.colors(
+                    unselectedContainerColor = Color(0xFFcaf0f8),
+
+                    ),
+                shape = RectangleShape,
+                onClick = {
+                    scope.launch {
+                        state.close()
+                    }
+                })
         }
-    ) {
+    }) {
         MapAppScafold(state, mapsViewModel)
     }
 
@@ -123,19 +122,22 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel) {
-    val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
+    val showBottomSheet by mapsViewModel.showBottomSheet.observeAsState(false)
 
-    Scaffold(
-        topBar = { MapAppTopBar(state = state) },
-        bottomBar = { },
-        content = { paddingValues ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(Color(0xFFcaf0f8))
-            ) {
+    Scaffold(topBar = { MapAppTopBar(state = state) }, bottomBar = { }, content = { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(Color(0xFFcaf0f8))
+        ) {
+            if (showBottomSheet) {
+                BottomSheet(
+                    onDismiss = { mapsViewModel.showBottomSheet.value = false },
+                    mapsViewModel = mapsViewModel
+                )
+            }
+
 //                if(mapsViewModel.showBottomSheet.value == true){
 //                    ModalBottomSheet(onDismissRequest = { mapsViewModel.showBottomSheetEnabler()},
 //                        sheetState = sheetState
@@ -151,10 +153,10 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel) {
 //                        }
 //                    }
 //                }
-                Map(mapsViewModel)
-            }
-
+            Map(mapsViewModel)
         }
+
+    }
 
 
     )
@@ -164,35 +166,30 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel) {
 @Composable
 fun MapAppTopBar(state: DrawerState) {
     val scope = rememberCoroutineScope()
-    TopAppBar(
-        title = {
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth(.8f),
-                text = "MapsApp",
-                textAlign = TextAlign.Center,
-                color = Color(0xFF03045e)
-            )
-        },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = Color(0xFF90e0ef),
-        ),
-        navigationIcon = {
-            IconButton(onClick = {
-                scope.launch {
-                    state.open()
-                }
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.Menu,
-                    contentDescription = "Menu",
-                    tint = Color(0xFF03045e)
-                )
-
+    TopAppBar(title = {
+        Text(
+            modifier = Modifier.fillMaxWidth(.8f),
+            text = "MapsApp",
+            textAlign = TextAlign.Center,
+            color = Color(0xFF03045e)
+        )
+    }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+        containerColor = Color(0xFF90e0ef),
+    ), navigationIcon = {
+        IconButton(onClick = {
+            scope.launch {
+                state.open()
             }
+        }) {
+            Icon(
+                imageVector = Icons.Filled.Menu,
+                contentDescription = "Menu",
+                tint = Color(0xFF03045e)
+            )
 
         }
-    )
+
+    })
 }
 
 
@@ -216,26 +213,24 @@ fun Map(mapsViewModel: MapsViewModel) {
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
-            GoogleMap(
-                modifier = Modifier
-                    .fillMaxSize(),
+            GoogleMap(modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 properties = properties,
                 uiSettings = uiSettings,
                 onMapLongClick = {
-                    val newMarker = CustomMarker("", it)
-                    mapsViewModel.addMarker(newMarker)
-
-                }
-            ) {
+                    mapsViewModel.showBottomSheet.value = true
+                    mapsViewModel.currentLatLng.value = it
+                }) {
                 markers?.forEach { newMarker ->
                     Marker(
                         state = MarkerState(
-                            position = newMarker.position
-                        ),
-                        title = newMarker.name
-                    )
+                            position = newMarker.position,
 
+                        ),
+                        title = newMarker.name,
+                        snippet = newMarker.description,
+                        icon = resizeMarkerIcon(context = LocalContext.current, icon = newMarker.icon)
+                    )
                 }
 
             }
@@ -250,10 +245,95 @@ fun Map(mapsViewModel: MapsViewModel) {
                     } else {
                         properties.copy(mapType = MapType.SATELLITE)
                     }
-                }
-            )
+                })
         }
 
 
     }
 }
+
+fun resizeMarkerIcon(context: Context, icon:Int): BitmapDescriptor {
+    val bitmap: Bitmap = BitmapFactory.decodeResource(context.resources, icon)
+    val resizedBitmap = Bitmap.createScaledBitmap(bitmap, 100, 100, false)
+    return BitmapDescriptorFactory.fromBitmap(resizedBitmap)
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BottomSheet(onDismiss: () -> Unit, mapsViewModel: MapsViewModel) {
+    val modalBotomSheetState = rememberModalBottomSheetState()
+
+    ModalBottomSheet(
+        onDismissRequest = { onDismiss() },
+        sheetState = modalBotomSheetState,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+
+        ) {
+        MarkerCreator(mapsViewModel)
+    }
+
+}
+
+@Composable
+fun MarkerCreator(mapsViewModel: MapsViewModel) {
+    var name by remember { mutableStateOf("") }
+    var snippet by remember { mutableStateOf("") }
+    val currentLatLng by mapsViewModel.currentLatLng.observeAsState(LatLng(0.0, 0.0))
+    val iconsList = listOf(
+        R.drawable.cafe,
+        R.drawable.fireman,
+        R.drawable.hospital,
+        R.drawable.airport,
+        R.drawable.park
+    )
+    var selectedIconNum by remember { mutableIntStateOf(0) }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+
+    ) {
+        TextField(value = name,
+            onValueChange = { name = it },
+            placeholder = { Text("Nombre del marcador") })
+
+        Spacer(modifier = Modifier.padding(8.dp))
+
+        TextField(value = snippet,
+            onValueChange = { snippet = it },
+            placeholder = { Text("Descripción del marcador") })
+
+        Spacer(modifier = Modifier.padding(8.dp))
+
+        Row {
+            iconsList.forEach { icon ->
+                Box(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .clip(RoundedCornerShape(8.dp))
+
+                ) {
+                    Image(painter = painterResource(id = icon),
+                        contentDescription = "icon",
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clickable {
+                                selectedIconNum = iconsList.indexOf(icon)
+                            })
+                }
+            }
+        }
+
+        Button(modifier = Modifier.padding(top = 16.dp, bottom = 16.dp), onClick = {
+            val newMarker = CustomMarker(name, snippet, currentLatLng, iconsList[selectedIconNum])
+            mapsViewModel.addMarker(newMarker)
+            mapsViewModel.showBottomSheet.value = false
+        }) {
+            Text(text = "Agregar marcador")
+        }
+    }
+}
+
+
