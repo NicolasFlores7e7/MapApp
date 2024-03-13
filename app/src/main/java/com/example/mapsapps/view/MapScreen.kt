@@ -12,11 +12,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
@@ -27,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +46,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
+import com.example.mapsapps.models.CustomMarker
 import com.example.mapsapps.viewModel.MapsViewModel
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -55,6 +59,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.collectAsState
 
 //COLOR PATELLETE https://coolors.co/03045e-0077b6-00b4d8-90e0ef-caf0f8
 // RECURSO GUAPO https://proandroiddev.com/mapping-experiences-with-google-maps-and-jetpack-compose-e0cca15c4359
@@ -115,8 +120,12 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel) {
+    val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+
     Scaffold(
         topBar = { MapAppTopBar(state = state) },
         bottomBar = { },
@@ -127,8 +136,25 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel) {
                     .padding(paddingValues)
                     .background(Color(0xFFcaf0f8))
             ) {
+                if(mapsViewModel.showBottomSheet.value == true){
+                    ModalBottomSheet(onDismissRequest = { mapsViewModel.showBottomSheet.value = false},
+                        sheetState = sheetState
+
+                    ) {
+                        Button(onClick = {
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                if (!sheetState.isVisible) {
+                                    mapsViewModel.showBottomSheet.value = false
+                                }
+                            }
+                        }) {
+                            Text("Close")
+                        }
+                    }
+                }
                 Map(mapsViewModel)
             }
+
         }
 
 
@@ -173,6 +199,7 @@ fun MapAppTopBar(state: DrawerState) {
 
 @Composable
 fun Map(mapsViewModel: MapsViewModel) {
+    val markers by mapsViewModel.markers.observeAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -188,7 +215,7 @@ fun Map(mapsViewModel: MapsViewModel) {
         var properties by remember {
             mutableStateOf(MapProperties(mapType = MapType.NORMAL))
         }
-        val marker by mapsViewModel.markers.observeAsState()
+
         Box(modifier = Modifier.fillMaxSize()) {
             GoogleMap(
                 modifier = Modifier
@@ -197,17 +224,20 @@ fun Map(mapsViewModel: MapsViewModel) {
                 properties = properties,
                 uiSettings = uiSettings,
                 onMapLongClick = {
-                    mapsViewModel.addMarker(MarkerOptions().position(it))
-                    println(it)
-                    println("marcadores "+ (mapsViewModel.markers.value?.size ?:0 ))
+                    mapsViewModel.showBottomSheet.value = true
+
+//                    val newMarker = CustomMarker("", it)
+//                    mapsViewModel.addMarker(newMarker)
+//                    println(it)
+//                    println("marcadores "+ (mapsViewModel.markers.value?.size ?:0 ))
                 }
             ) {
-                marker?.forEach {
+                markers?.forEach { newMarker ->
                     Marker(
                         state = MarkerState(
-                            position = it.position
+                            position = newMarker.position
                         ),
-                        title = ""
+                        title = newMarker.name
                     )
 
                 }
