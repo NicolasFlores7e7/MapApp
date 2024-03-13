@@ -7,27 +7,23 @@ import com.google.android.gms.maps.model.MarkerOptions
 
 class MapsViewModel : ViewModel() {
 
-    private val _markers = MutableLiveData(
-        mutableListOf<CustomMarker>())
+    private val _markers = MutableLiveData<List<CustomMarker>>(emptyList())
     val markers = _markers
-    val _showBottomSheet = MutableLiveData(false)
-    val showBottomSheet = _showBottomSheet
+//    private val _showBottomSheet = MutableLiveData(false)
+//    val showBottomSheet = _showBottomSheet
 
     fun addMarker(marker: CustomMarker) {
-        val list = _markers.value
-        if (list != null) {
-            list.add(marker)
-        }
-        _markers.value = list
-        println("marcadores viewmodel "+ (_markers.value?.size ?:0 ))
+        val currentMarkers = _markers.value.orEmpty().toMutableList()
+        currentMarkers.add(marker)
+        _markers.value = currentMarkers.toList()
     }
 
-    fun showBottomSheetEnabler() {
-        if (showBottomSheet.value == true) {
-            _showBottomSheet.value = false
-        } else {
-            _showBottomSheet.value = true
-        }
-    }
+//    fun showBottomSheetEnabler() {
+//        if (showBottomSheet.value == true) {
+//            _showBottomSheet.value = false
+//        } else {
+//            _showBottomSheet.value = true
+//        }
+//    }
 
 }

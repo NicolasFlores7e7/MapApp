@@ -136,22 +136,21 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel) {
                     .padding(paddingValues)
                     .background(Color(0xFFcaf0f8))
             ) {
-                if(mapsViewModel.showBottomSheet.value == true){
-                    ModalBottomSheet(onDismissRequest = { mapsViewModel.showBottomSheet.value = false},
-                        sheetState = sheetState
-
-                    ) {
-                        Button(onClick = {
-                            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                if (!sheetState.isVisible) {
-                                    mapsViewModel.showBottomSheet.value = false
-                                }
-                            }
-                        }) {
-                            Text("Close")
-                        }
-                    }
-                }
+//                if(mapsViewModel.showBottomSheet.value == true){
+//                    ModalBottomSheet(onDismissRequest = { mapsViewModel.showBottomSheetEnabler()},
+//                        sheetState = sheetState
+//
+//                    ) {
+//                        Button(onClick = {
+//                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+//                                if (!sheetState.isVisible) {
+//                                    mapsViewModel.showBottomSheetEnabler()                                }
+//                            }
+//                        }) {
+//                            Text("Close")
+//                        }
+//                    }
+//                }
                 Map(mapsViewModel)
             }
 
@@ -199,7 +198,7 @@ fun MapAppTopBar(state: DrawerState) {
 
 @Composable
 fun Map(mapsViewModel: MapsViewModel) {
-    val markers by mapsViewModel.markers.observeAsState()
+    val markers by mapsViewModel.markers.observeAsState(emptyList())
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -224,12 +223,9 @@ fun Map(mapsViewModel: MapsViewModel) {
                 properties = properties,
                 uiSettings = uiSettings,
                 onMapLongClick = {
-                    mapsViewModel.showBottomSheet.value = true
+                    val newMarker = CustomMarker("", it)
+                    mapsViewModel.addMarker(newMarker)
 
-//                    val newMarker = CustomMarker("", it)
-//                    mapsViewModel.addMarker(newMarker)
-//                    println(it)
-//                    println("marcadores "+ (mapsViewModel.markers.value?.size ?:0 ))
                 }
             ) {
                 markers?.forEach { newMarker ->
