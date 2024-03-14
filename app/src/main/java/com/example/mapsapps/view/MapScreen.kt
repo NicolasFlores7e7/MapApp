@@ -68,15 +68,17 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.mapsapps.R
+import com.example.mapsapps.navigations.Routes
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 
 //COLOR PATELLETE https://coolors.co/03045e-0077b6-00b4d8-90e0ef-caf0f8
 // RECURSO GUAPO https://proandroiddev.com/mapping-experiences-with-google-maps-and-jetpack-compose-e0cca15c4359
 @Composable
-fun MapAppDrawer(mapsViewModel: MapsViewModel) {
-    val navigationController = rememberNavController()
+fun MapAppDrawer(mapsViewModel: MapsViewModel, navController: NavController) {
     val scope = rememberCoroutineScope()
     val state: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     ModalNavigationDrawer(drawerState = state, gesturesEnabled = state.isOpen, drawerContent = {
@@ -89,17 +91,16 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Filled.LocationOn,
+                    imageVector = Icons.Filled.Menu,
                     contentDescription = "Location",
                     tint = Color(0xFF03045e)
                 )
                 Text(
-                    "Marcadores", color = Color(0xFF03045e), modifier = Modifier.padding(16.dp)
+                    "Menú", color = Color(0xFF03045e), modifier = Modifier.padding(16.dp)
                 )
             }
-
             NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp),
-                label = { Text(text = "Marcador 1") },
+                label = { Text(text = "Inicio") },
                 selected = false,
                 colors = NavigationDrawerItemDefaults.colors(
                     unselectedContainerColor = Color(0xFFcaf0f8),
@@ -107,22 +108,40 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
                     ),
                 shape = RectangleShape,
                 onClick = {
+                    navController.navigate(Routes.Map.route)
                     scope.launch {
                         state.close()
                     }
                 })
+            NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp),
+                label = { Text(text = "Lista de marcadores favoritos") },
+                selected = false,
+                colors = NavigationDrawerItemDefaults.colors(
+                    unselectedContainerColor = Color(0xFFcaf0f8),
+
+                    ),
+                shape = RectangleShape,
+                onClick = {
+                    navController.navigate(Routes.MarkerList.route)
+                    scope.launch {
+                        state.close()
+                    }
+                })
+
         }
     }) {
-        MapAppScafold(state, mapsViewModel)
+
+        MapAppScafold(state, mapsViewModel, navController)
     }
 
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel) {
+fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navController: NavController) {
     val showBottomSheet by mapsViewModel.showBottomSheet.observeAsState(false)
+    val navStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navStackEntry?.destination?.route
 
     Scaffold(topBar = { MapAppTopBar(state = state) }, bottomBar = { }, content = { paddingValues ->
         Box(
@@ -138,22 +157,10 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel) {
                 )
             }
 
-//                if(mapsViewModel.showBottomSheet.value == true){
-//                    ModalBottomSheet(onDismissRequest = { mapsViewModel.showBottomSheetEnabler()},
-//                        sheetState = sheetState
-//
-//                    ) {
-//                        Button(onClick = {
-//                            scope.launch { sheetState.hide() }.invokeOnCompletion {
-//                                if (!sheetState.isVisible) {
-//                                    mapsViewModel.showBottomSheetEnabler()                                }
-//                            }
-//                        }) {
-//                            Text("Close")
-//                        }
-//                    }
-//                }
-            Map(mapsViewModel)
+            when(currentRoute){
+                Routes.Map.route -> Map(mapsViewModel)
+                Routes.MarkerList.route -> MarkerListScreen(navController, mapsViewModel)
+            }
         }
 
     }
