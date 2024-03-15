@@ -42,6 +42,7 @@ fun MarkerListScreen(navController: NavController, mapsViewModel: MapsViewModel)
 @Composable
 fun MarkerListItem(mapsViewModel: MapsViewModel) {
     val markers: List<CustomMarker> by mapsViewModel.markers.observeAsState(listOf())
+    val iconList = mapsViewModel.iconsList
     Column(
         modifier = Modifier,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -52,12 +53,12 @@ fun MarkerListItem(mapsViewModel: MapsViewModel) {
         ) {
             items(markers.size) {
                 val image = when (markers[it].icon) {
-                    R.drawable.cafe -> R.drawable.cafe
-                    R.drawable.fireman -> R.drawable.fireman
-                    R.drawable.hospital -> R.drawable.hospital
-                    R.drawable.airport -> R.drawable.airport
-                    R.drawable.park -> R.drawable.park
-                    else -> R.drawable.cafe
+                    iconList[0] -> iconList[0]
+                    iconList[1] -> iconList[1]
+                    iconList[2] -> iconList[2]
+                    iconList[3] -> iconList[3]
+                    iconList[4] -> iconList[4]
+                    else -> iconList[0]
                 }
                 MarkerItem(marker = markers[it], image)
                 Spacer(modifier = Modifier.height(8.dp))
