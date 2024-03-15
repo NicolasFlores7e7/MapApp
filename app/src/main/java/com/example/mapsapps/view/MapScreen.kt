@@ -32,6 +32,7 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
@@ -113,7 +114,7 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
                     .padding(top = 8.dp),
                 label = {
                     Text(
-                        text = "Inicio",
+                        text = "Mapa",
                         color = Color(0xFF03045e),
                         fontSize = 20.sp,
                     ) },
@@ -271,6 +272,13 @@ fun Map(mapsViewModel: MapsViewModel) {
                 .align(Alignment.TopEnd)
                 .padding(vertical = 16.dp, horizontal = 16.dp),
                 checked = uiSettings.zoomControlsEnabled,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color(0xFF8FDEED),
+                    checkedTrackColor = Color(0xFFC8EEF6),
+                    uncheckedThumbColor = Color(0xFFC8EEF6),
+                    uncheckedTrackColor = Color(0xFF8FDEED)
+
+                ),
                 onCheckedChange = {
                     uiSettings = uiSettings.copy(zoomControlsEnabled = it)
                     properties = if (it) {
@@ -313,13 +321,8 @@ fun MarkerCreator(mapsViewModel: MapsViewModel) {
     var name by remember { mutableStateOf("") }
     var snippet by remember { mutableStateOf("") }
     val currentLatLng by mapsViewModel.currentLatLng.observeAsState(LatLng(0.0, 0.0))
-    val iconsList = listOf(
-        R.drawable.cafe,
-        R.drawable.fireman,
-        R.drawable.hospital,
-        R.drawable.airport,
-        R.drawable.park
-    )
+    val iconsList = mapsViewModel.iconsList
+
     var selectedIconNum by remember { mutableIntStateOf(0) }
     Column(
         modifier = Modifier
