@@ -32,18 +32,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val navigationController = rememberNavController()
-                    MapAppDrawer(mapsViewModel,navigationController)
 
-                    NavHost(
-                        navController = navigationController,
-                        startDestination = Routes.Map.route
-                    ){
-                        composable(Routes.Login.route){ LogInScreen(navigationController, mapsViewModel)}
-                        composable(Routes.AddMarker.route){ AddMarkerScreen(navigationController, mapsViewModel) }
-                        composable(Routes.Map.route){ MapAppDrawer(mapsViewModel, navigationController) }
-                        composable(Routes.MarkerList.route){ MarkerListScreen(navigationController,mapsViewModel) }
-                    }
+                    MapAppDrawer(mapsViewModel)
+
                 }
             }
         }

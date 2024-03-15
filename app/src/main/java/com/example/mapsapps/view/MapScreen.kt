@@ -12,11 +12,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
@@ -52,7 +52,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.navigation.compose.rememberNavController
 import com.example.mapsapps.models.CustomMarker
 import com.example.mapsapps.viewModel.MapsViewModel
 import com.google.android.gms.maps.model.CameraPosition
@@ -68,8 +67,13 @@ import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.mapsapps.R
 import com.example.mapsapps.navigations.Routes
 import com.google.android.gms.maps.model.BitmapDescriptor
@@ -78,7 +82,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 //COLOR PATELLETE https://coolors.co/03045e-0077b6-00b4d8-90e0ef-caf0f8
 // RECURSO GUAPO https://proandroiddev.com/mapping-experiences-with-google-maps-and-jetpack-compose-e0cca15c4359
 @Composable
-fun MapAppDrawer(mapsViewModel: MapsViewModel, navController: NavController) {
+fun MapAppDrawer(mapsViewModel: MapsViewModel) {
+    val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     val state: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     ModalNavigationDrawer(drawerState = state, gesturesEnabled = state.isOpen, drawerContent = {
@@ -96,15 +101,25 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel, navController: NavController) {
                     tint = Color(0xFF03045e)
                 )
                 Text(
-                    "Menú", color = Color(0xFF03045e), modifier = Modifier.padding(16.dp)
+                    "Menú",
+                    color = Color(0xFF03045e),
+                    fontSize = 40.sp,
+                    modifier = Modifier.padding(16.dp)
                 )
+
             }
-            NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp),
-                label = { Text(text = "Inicio") },
+            NavigationDrawerItem(
+                modifier = Modifier
+                    .padding(top = 8.dp),
+                label = {
+                    Text(
+                        text = "Inicio",
+                        color = Color(0xFF03045e),
+                        fontSize = 20.sp,
+                    ) },
                 selected = false,
                 colors = NavigationDrawerItemDefaults.colors(
                     unselectedContainerColor = Color(0xFFcaf0f8),
-
                     ),
                 shape = RectangleShape,
                 onClick = {
@@ -114,7 +129,11 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel, navController: NavController) {
                     }
                 })
             NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp),
-                label = { Text(text = "Lista de marcadores favoritos") },
+                label = { Text(
+                    text = "Lista de marcadores favoritos",
+                    color = Color(0xFF03045e),
+                    fontSize = 20.sp,
+                ) },
                 selected = false,
                 colors = NavigationDrawerItemDefaults.colors(
                     unselectedContainerColor = Color(0xFFcaf0f8),
@@ -139,10 +158,8 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel, navController: NavController) {
 
 @Composable
 fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navController: NavController) {
-    val showBottomSheet by mapsViewModel.showBottomSheet.observeAsState(false)
-    val navStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navStackEntry?.destination?.route
 
+    val showBottomSheet by mapsViewModel.showBottomSheet.observeAsState(false)
     Scaffold(topBar = { MapAppTopBar(state = state) }, bottomBar = { }, content = { paddingValues ->
         Box(
             modifier = Modifier
@@ -157,9 +174,14 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navControlle
                 )
             }
 
-            when(currentRoute){
-                Routes.Map.route -> Map(mapsViewModel)
-                Routes.MarkerList.route -> MarkerListScreen(navController, mapsViewModel)
+            NavHost(
+                navController = navController as NavHostController,
+                startDestination = Routes.Map.route
+            ){
+                composable(Routes.Login.route){ LogInScreen(navController, mapsViewModel)}
+                composable(Routes.AddMarker.route){ AddMarkerScreen(navController, mapsViewModel) }
+                composable(Routes.Map.route){ Map(mapsViewModel) }
+                composable(Routes.MarkerList.route){ MarkerListScreen(navController,mapsViewModel) }
             }
         }
 
@@ -219,8 +241,12 @@ fun Map(mapsViewModel: MapsViewModel) {
             mutableStateOf(MapProperties(mapType = MapType.NORMAL))
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            GoogleMap(modifier = Modifier.fillMaxSize(),
+        Box(
+            modifier = Modifier
+                .fillMaxSize()) {
+            GoogleMap(
+                modifier = Modifier
+                    .fillMaxSize(),
                 cameraPositionState = cameraPositionState,
                 properties = properties,
                 uiSettings = uiSettings,

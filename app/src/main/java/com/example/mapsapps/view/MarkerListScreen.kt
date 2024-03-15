@@ -1,6 +1,8 @@
 package com.example.mapsapps.view
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,23 +20,25 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.mapsapps.models.CustomMarker
 import com.example.mapsapps.viewModel.MapsViewModel
 
 @Composable
 fun MarkerListScreen(navController: NavController, mapsViewModel: MapsViewModel) {
-    Text(text = "Marker List")
-//    MarkerListItem(mapsViewModel)
+
+  MarkerListItem(mapsViewModel)
 }
 
 @Composable
 fun MarkerListItem(mapsViewModel: MapsViewModel) {
     val markers: List<CustomMarker> by mapsViewModel.markers.observeAsState(listOf())
     Column(
-        modifier = Modifier
-        .padding(32.dp),
+        modifier = Modifier,
         horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(modifier = Modifier.height(8.dp))
         LazyColumn(
@@ -42,6 +46,7 @@ fun MarkerListItem(mapsViewModel: MapsViewModel) {
         ) {
             items(markers.size) {
                 MarkerItem(marker= markers[it])
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
@@ -52,22 +57,51 @@ fun MarkerItem(marker: CustomMarker) {
     Card(
         border = BorderStroke(
             2.dp,
-            Color.Blue
+            Color(0xFF03045e)
         ),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
-            .padding(8.dp)
             .fillMaxWidth()
+            .padding(start = 8.dp, end = 8.dp,)
     ) {
 
         Row(
             modifier = Modifier
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxWidth()
+                .background(Color(0xFF8FDEED)),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
         ) {
-            Column {
-                    Text(text = marker.name)
-                    Text(text = marker.description)
+            Column (modifier = Modifier
+                .padding(top = 8.dp, bottom = 8.dp,),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start,
+                ) {
+                    Text(
+                        modifier = Modifier.padding(start = 8.dp, end = 8.dp),
+                        text ="Nombre del marcador: "+marker.name,
+                        textAlign = TextAlign.Start,
+                        lineHeight = 20.sp,
+                        fontSize = 16.sp,
+                        color = Color(0xFF03045e),
+
+                    )
+                    Text(
+                        modifier = Modifier.padding(start = 8.dp, end = 8.dp),
+                        text = "Descripción del marcador: "+ marker.description,
+                        textAlign = TextAlign.Start,
+                        lineHeight = 20.sp,
+                        fontSize = 16.sp,
+                        color = Color(0xFF03045e),
+                    )
+                Text(
+                    modifier = Modifier.padding(start = 8.dp, end = 8.dp),
+                    text = "Ubicación del marcador: "+ marker.position,
+                    textAlign = TextAlign.Start,
+                    lineHeight = 20.sp,
+                    fontSize = 16.sp,
+                    color = Color(0xFF03045e),
+                )
 
             }
         }
