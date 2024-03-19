@@ -1,11 +1,20 @@
 package com.example.mapsapps.view
 
+import android.Manifest
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
+import android.provider.Settings
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,7 +26,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -35,7 +43,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -45,6 +52,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -54,10 +62,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.mapsapps.models.CustomMarker
+import com.example.mapsapps.navigations.Routes
 import com.example.mapsapps.viewModel.MapsViewModel
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -68,18 +89,6 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.mapsapps.navigations.Routes
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 
 //COLOR PATELLETE https://coolors.co/03045e-0077b6-00b4d8-90e0ef-caf0f8
 // RECURSO GUAPO https://proandroiddev.com/mapping-experiences-with-google-maps-and-jetpack-compose-e0cca15c4359
@@ -163,7 +172,8 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navControlle
             if (showBottomSheet) {
                 BottomSheet(
                     onDismiss = { mapsViewModel.showBottomSheet.value = false },
-                    mapsViewModel = mapsViewModel
+                    mapsViewModel = mapsViewModel,
+                    navController = navController
                 )
             }
 
@@ -179,6 +189,8 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navControlle
                         navController, mapsViewModel
                     )
                 }
+                composable(Routes.PhotoScreen.route) { PhotoScreen(navController, mapsViewModel) }
+                composable(Routes.GaleryScreen.route) { GaleryScreen(navController, mapsViewModel) }
             }
         }
 
@@ -298,7 +310,7 @@ fun resizeMarkerIcon(context: Context, icon: Int): BitmapDescriptor {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomSheet(onDismiss: () -> Unit, mapsViewModel: MapsViewModel) {
+fun BottomSheet(onDismiss: () -> Unit, mapsViewModel: MapsViewModel, navController: NavController) {
     val modalBotomSheetState = rememberModalBottomSheetState()
 
     ModalBottomSheet(
@@ -309,14 +321,14 @@ fun BottomSheet(onDismiss: () -> Unit, mapsViewModel: MapsViewModel) {
         modifier = Modifier.fillMaxWidth(),
 
         ) {
-        MarkerCreator(mapsViewModel)
+        MarkerCreator(mapsViewModel, navController)
     }
 
 }
 
 
 @Composable
-fun MarkerCreator(mapsViewModel: MapsViewModel) {
+fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
     var name by remember { mutableStateOf("") }
     var snippet by remember { mutableStateOf("") }
     val currentLatLng by mapsViewModel.currentLatLng.observeAsState(LatLng(0.0, 0.0))
@@ -384,12 +396,13 @@ fun MarkerCreator(mapsViewModel: MapsViewModel) {
                 }
             }
         }
+        CameraScreen(navController, mapsViewModel )
         Button(
             modifier = Modifier
                 .padding(top = 16.dp, bottom = 16.dp)
                 .fillMaxWidth(0.8f), onClick = {
                 val newMarker =
-                    CustomMarker(name, snippet, currentLatLng, iconsList[selectedIconNum])
+                    CustomMarker(name, snippet, currentLatLng, iconsList[selectedIconNum], "")
                 mapsViewModel.addMarker(newMarker)
                 mapsViewModel.showBottomSheet.value = false
             }, colors = ButtonDefaults.buttonColors(
@@ -401,9 +414,98 @@ fun MarkerCreator(mapsViewModel: MapsViewModel) {
 
         }
 
+
+
     }
 }
 
+@Composable
+fun CameraScreen(navController: NavController, mapsViewModel: MapsViewModel) {
+    val context = LocalContext.current
+    val isCameraPermGranted by mapsViewModel.cameraPermission.observeAsState(false)
+    val shouldShowPermRationale by mapsViewModel.shouldPermRationale.observeAsState(false)
+    val showPermDenied by mapsViewModel.showPermDenied.observeAsState(false)
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                mapsViewModel.setCameraPermission(true)
+            } else {
+                mapsViewModel.setShouldPermRationale(
+                    shouldShowRequestPermissionRationale(
+                        context as Activity,
+                        Manifest.permission.CAMERA
+                    )
+                )
+                if (!shouldShowPermRationale) {
+                    Log.i("CameraScreen", "No podemos volver a pedir permisos")
+                    mapsViewModel.setShowPermDenied(true)
+                }
+            }
+        }
+    )
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        Button(
+            onClick = {
+            if (!isCameraPermGranted) {
+                launcher.launch(Manifest.permission.CAMERA)
+            } else {
+                navController.navigate(Routes.PhotoScreen.route)
+                mapsViewModel.showBottomSheet.value = false
+            }
+        }, modifier = Modifier
+                .padding(top = 16.dp, bottom = 16.dp)
+                .fillMaxWidth(0.8f),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFcaf0f8), contentColor = Color(0xFF03045e)
+            ),
+            shape = RoundedCornerShape(8.dp) ) {
+            Text(text = "Take photo")
+        }
+    }
+    if (showPermDenied) {
+        PermissionDeclinedScreen()
+    }
+}
+
+@Composable
+fun PermissionDeclinedScreen() {
+    val context = LocalContext.current
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+
+    ) {
+        Text(
+            text = "Permission required to take photos",
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = "This app need access to your camera to take photos"
+        )
+        Button(onClick = {
+            openAppSettings(context as Activity)
+        }) {
+            Text(text = "Accept")
+        }
+
+    }
+}
+fun openAppSettings(activity: Activity){
+    val intent = Intent().apply {
+        action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+        data = Uri.fromParts("package", activity.packageName, null)
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+    activity.startActivity(intent)
+}
 
 
 

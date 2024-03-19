@@ -21,11 +21,26 @@ class MapsViewModel : ViewModel() {
         R.drawable.airport,
         R.drawable.park
     )
+    private val _cameraPermission = MutableLiveData(false)
+    val cameraPermission = _cameraPermission
+    private val _shouldPermRationale = MutableLiveData(false)
+    val shouldPermRationale = _shouldPermRationale
+    private val _showPermDenied = MutableLiveData(false)
+    val showPermDenied = _showPermDenied
 
     fun addMarker(marker: CustomMarker) {
         _markers.value?.apply { add(marker) }
     }
 
+    fun setCameraPermission(granted: Boolean) {
+        _cameraPermission.value = granted
+    }
+    fun setShouldPermRationale(should: Boolean) {
+        _shouldPermRationale.value = should
+    }
 
+    fun setShowPermDenied(denied: Boolean) {
+        _showPermDenied.value = denied
+    }
 
 }

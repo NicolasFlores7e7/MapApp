@@ -6,5 +6,6 @@ data class CustomMarker(
     val name: String,
     val description: String,
     val position : LatLng,
-    val icon: Int
+    val icon: Int,
+    val image: String
 )
