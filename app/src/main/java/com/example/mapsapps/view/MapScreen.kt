@@ -13,16 +13,21 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -62,6 +67,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -74,6 +82,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.mapsapps.R
 import com.example.mapsapps.models.CustomMarker
 import com.example.mapsapps.navigations.Routes
 import com.example.mapsapps.viewModel.MapsViewModel
@@ -318,7 +327,9 @@ fun BottomSheet(onDismiss: () -> Unit, mapsViewModel: MapsViewModel, navControll
         sheetState = modalBotomSheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() },
         containerColor = Color(0xFF8FDFEE),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth(),
+
 
         ) {
         MarkerCreator(mapsViewModel, navController)
@@ -338,13 +349,17 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
 
     ) {
-        TextField(value = name, onValueChange = { name = it }, placeholder = {
+        TextField(
+            value = name,
+            onValueChange = { name = it },
+            placeholder = {
             Text(
-                "Nombre del marcador", color = Color(0xFF03045e)
+                "Nombre del marcador",
+                color = Color(0xFF03045e)
             )
         }, colors = TextFieldDefaults.colors(
             cursorColor = Color(0xFF03045e),
@@ -357,11 +372,15 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
             focusedTextColor = Color(0xFF03045e),
         ), shape = RoundedCornerShape(8.dp)
         )
-        Spacer(modifier = Modifier.padding(8.dp))
+        Spacer(modifier = Modifier.padding(4.dp))
 
-        TextField(value = snippet, onValueChange = { snippet = it }, placeholder = {
+        TextField(
+            value = snippet,
+            onValueChange = { snippet = it },
+            placeholder = {
             Text(
-                "Descripción del marcador", color = Color(0xFF03045e)
+                "Descripción del marcador",
+                color = Color(0xFF03045e)
             )
         }, colors = TextFieldDefaults.colors(
             cursorColor = Color(0xFF03045e),
@@ -396,13 +415,14 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
                 }
             }
         }
-        CameraScreen(navController, mapsViewModel )
+        CameraScreen(navController, mapsViewModel)
+        Spacer(modifier =Modifier.height(8.dp))
         Button(
             modifier = Modifier
-                .padding(top = 16.dp, bottom = 16.dp)
+                .padding(bottom = 16.dp)
                 .fillMaxWidth(0.8f), onClick = {
                 val newMarker =
-                    CustomMarker(name, snippet, currentLatLng, iconsList[selectedIconNum], "")
+                    CustomMarker(name, snippet, currentLatLng, iconsList[selectedIconNum], mapsViewModel.photoTaken.value!!)
                 mapsViewModel.addMarker(newMarker)
                 mapsViewModel.showBottomSheet.value = false
             }, colors = ButtonDefaults.buttonColors(
@@ -413,7 +433,7 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
             Text(text = "Agregar marcador")
 
         }
-
+        Spacer(modifier = Modifier.padding(8.dp))
 
 
     }
@@ -425,6 +445,9 @@ fun CameraScreen(navController: NavController, mapsViewModel: MapsViewModel) {
     val isCameraPermGranted by mapsViewModel.cameraPermission.observeAsState(false)
     val shouldShowPermRationale by mapsViewModel.shouldPermRationale.observeAsState(false)
     val showPermDenied by mapsViewModel.showPermDenied.observeAsState(false)
+
+    val noImageBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.no_image)
+    val photoTaken by mapsViewModel.photoTaken.observeAsState(noImageBitmap)
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
@@ -450,26 +473,40 @@ fun CameraScreen(navController: NavController, mapsViewModel: MapsViewModel) {
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        Button(
-            onClick = {
-            if (!isCameraPermGranted) {
-                launcher.launch(Manifest.permission.CAMERA)
-            } else {
-                navController.navigate(Routes.PhotoScreen.route)
-                mapsViewModel.showBottomSheet.value = false
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Button(
+                onClick = {
+                    if (!isCameraPermGranted) {
+                        launcher.launch(Manifest.permission.CAMERA)
+                    } else {
+                        navController.navigate(Routes.PhotoScreen.route)
+                        mapsViewModel.showBottomSheet.value = false
+                    }
+                }, modifier = Modifier
+                    .padding(top = 8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFcaf0f8), contentColor = Color(0xFF03045e)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(text = "Take photo")
             }
-        }, modifier = Modifier
-                .padding(top = 16.dp, bottom = 16.dp)
-                .fillMaxWidth(0.8f),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFcaf0f8), contentColor = Color(0xFF03045e)
-            ),
-            shape = RoundedCornerShape(8.dp) ) {
-            Text(text = "Take photo")
+            Spacer(modifier = Modifier.width(8.dp))
+            photoTaken?.let { BitmapPainter(it.asImageBitmap()) }
+                ?.let { Image(
+                    painter = it,
+                    contentDescription = "photo",
+                    modifier = Modifier
+                        .width(120.dp)
+                        .height(120.dp)
+                        .clip(CircleShape)
+                        .border(3.dp, Color(0xFFcaf0f8), CircleShape),
+                    contentScale = ContentScale.Crop
+                        )}
         }
-    }
-    if (showPermDenied) {
-        PermissionDeclinedScreen()
+        if (showPermDenied) {
+            PermissionDeclinedScreen()
+        }
     }
 }
 
@@ -498,7 +535,8 @@ fun PermissionDeclinedScreen() {
 
     }
 }
-fun openAppSettings(activity: Activity){
+
+fun openAppSettings(activity: Activity) {
     val intent = Intent().apply {
         action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
         data = Uri.fromParts("package", activity.packageName, null)

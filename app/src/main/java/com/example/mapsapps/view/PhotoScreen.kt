@@ -2,6 +2,7 @@ package com.example.mapsapps.view
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Matrix
 import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -86,8 +87,9 @@ fun PhotoScreen(navController: NavHostController, mapsViewModel: MapsViewModel) 
                 }
                 IconButton(onClick = {
                     takePhoto(context, controller) { photo ->
-
-
+                        mapsViewModel.addPhotoTaken(photo)
+                        navController.navigate(Routes.Map.route)
+                        mapsViewModel.showBottomSheet.value = true
                     }
                 }) {
                     Icon(
@@ -127,6 +129,19 @@ private fun takePhoto(
             override fun onCaptureSuccess(image: ImageProxy) {
                 super.onCaptureSuccess(image)
                 onPhotoTaken(image.toBitmap())
+                val matri = Matrix().apply{
+                    postRotate(image.imageInfo.rotationDegrees.toFloat())
+                }
+                val rotatedBitmap = Bitmap.createBitmap(
+                    image.toBitmap(),
+                    0,
+                    0,
+                    image.width,
+                    image.height,
+                    matri,
+                    true
+                )
+                onPhotoTaken(rotatedBitmap)
             }
 
             override fun onError(exception: ImageCaptureException) {
@@ -135,6 +150,8 @@ private fun takePhoto(
             }
         }
     )
+
+
 }
 
 

@@ -1,5 +1,6 @@
 package com.example.mapsapps.viewModel
 
+import android.graphics.Bitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.mapsapps.R
@@ -28,6 +29,9 @@ class MapsViewModel : ViewModel() {
     private val _showPermDenied = MutableLiveData(false)
     val showPermDenied = _showPermDenied
 
+    private val _photoTaken = MutableLiveData<Bitmap?>()
+    val photoTaken = _photoTaken
+
     fun addMarker(marker: CustomMarker) {
         _markers.value?.apply { add(marker) }
     }
@@ -41,6 +45,10 @@ class MapsViewModel : ViewModel() {
 
     fun setShowPermDenied(denied: Boolean) {
         _showPermDenied.value = denied
+    }
+
+    fun addPhotoTaken(bitmap: Bitmap) {
+        _photoTaken.value = bitmap
     }
 
 }
