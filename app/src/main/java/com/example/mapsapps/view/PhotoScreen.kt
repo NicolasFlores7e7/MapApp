@@ -2,8 +2,13 @@ package com.example.mapsapps.view
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.graphics.Matrix
+import android.os.Build
+import android.provider.MediaStore
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -25,7 +30,10 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -33,7 +41,9 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.navigation.NavHostController
+import com.example.mapsapps.R
 import com.example.mapsapps.navigations.Routes
 import com.example.mapsapps.viewModel.MapsViewModel
 
@@ -45,6 +55,21 @@ fun PhotoScreen(navController: NavHostController, mapsViewModel: MapsViewModel) 
             CameraController.IMAGE_CAPTURE
         }
     }
+    val img: Bitmap? = ContextCompat.getDrawable(context, R.drawable.airport)?.toBitmap()
+    var bitmap by remember { mutableStateOf(img) }
+    val launchImage = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            if (uri != null) {
+                bitmap = if (Build.VERSION.SDK_INT < 28) {
+                    MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                } else {
+                    val source = ImageDecoder.createSource(context.contentResolver, uri)
+                    ImageDecoder.decodeBitmap(source)
+                }
+            }
+        }
+    )
     Box(modifier = Modifier.fillMaxSize()) {
         CameraPreview(
             controller = controller, modifier = Modifier.fillMaxSize()
@@ -79,7 +104,7 @@ fun PhotoScreen(navController: NavHostController, mapsViewModel: MapsViewModel) 
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 IconButton(onClick = {
-                    navController.navigate(Routes.GaleryScreen.route)
+                    launchImage.launch("image/*")
                 }) {
                     Icon(
                         imageVector = Icons.Default.Photo, contentDescription = "Open Gallery"

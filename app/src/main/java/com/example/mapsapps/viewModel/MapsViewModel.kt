@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.mapsapps.R
+import com.example.mapsapps.firebase.Repository
 import com.example.mapsapps.models.CustomMarker
 import com.google.android.gms.maps.model.LatLng
 
@@ -31,14 +32,18 @@ class MapsViewModel : ViewModel() {
 
     private val _photoTaken = MutableLiveData<Bitmap?>()
     val photoTaken = _photoTaken
+    private val repository = Repository()
 
     fun addMarker(marker: CustomMarker) {
         _markers.value?.apply { add(marker) }
+        repository.addMarker(marker)
+
     }
 
     fun setCameraPermission(granted: Boolean) {
         _cameraPermission.value = granted
     }
+
     fun setShouldPermRationale(should: Boolean) {
         _shouldPermRationale.value = should
     }

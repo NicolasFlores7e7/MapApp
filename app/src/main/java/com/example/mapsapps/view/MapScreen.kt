@@ -1,16 +1,19 @@
 package com.example.mapsapps.view
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,7 +23,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -55,6 +57,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
@@ -82,10 +85,15 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.mapsapps.MainActivity
 import com.example.mapsapps.R
 import com.example.mapsapps.models.CustomMarker
 import com.example.mapsapps.navigations.Routes
 import com.example.mapsapps.viewModel.MapsViewModel
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -101,6 +109,7 @@ import kotlinx.coroutines.launch
 
 //COLOR PATELLETE https://coolors.co/03045e-0077b6-00b4d8-90e0ef-caf0f8
 // RECURSO GUAPO https://proandroiddev.com/mapping-experiences-with-google-maps-and-jetpack-compose-e0cca15c4359
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
 fun MapAppDrawer(mapsViewModel: MapsViewModel) {
     val navController = rememberNavController()
@@ -167,6 +176,7 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
 }
 
 
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
 fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navController: NavController) {
 
@@ -199,7 +209,7 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navControlle
                     )
                 }
                 composable(Routes.PhotoScreen.route) { PhotoScreen(navController, mapsViewModel) }
-                composable(Routes.GaleryScreen.route) { GaleryScreen(navController, mapsViewModel) }
+
             }
         }
 
@@ -240,73 +250,110 @@ fun MapAppTopBar(state: DrawerState) {
 }
 
 
+@SuppressLint("MissingPermission")
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun Map(mapsViewModel: MapsViewModel) {
     val markers by mapsViewModel.markers.observeAsState(emptyList())
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .clip(shape = RoundedCornerShape(32.dp))
-            .background(Color(0xFF90e0ef))
-    ) {
-        val itb = LatLng(41.4534265, 2.18375151)
-        val cameraPositionState = rememberCameraPositionState {
-            position = CameraPosition.fromLatLngZoom(itb, 10f)
+    val permissionState =
+        rememberPermissionState(permission = Manifest.permission.ACCESS_FINE_LOCATION)
+    val context = LocalContext.current
+    val fusedLocationProviderClient =
+        remember { LocationServices.getFusedLocationProviderClient(context) }
+    var lastKnowLocation by remember { mutableStateOf<android.location.Location?>(null) }
+    var deviceLatLng by remember { mutableStateOf(LatLng(0.0, 0.0)) }
+    val cameraPositionState =
+        rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(deviceLatLng, 18f) }
+    val locationResult = fusedLocationProviderClient.getCurrentLocation(100, null)
+    locationResult.addOnCompleteListener(context as MainActivity) { task ->
+        if (task.isSuccessful && task.result != null) {
+            lastKnowLocation = task.result
+            deviceLatLng = LatLng(lastKnowLocation!!.latitude, lastKnowLocation!!.longitude)
+            cameraPositionState.position = CameraPosition.fromLatLngZoom(deviceLatLng, 18f)
+        } else {
+            Log.e("Error", "Exception: %s", task.exception)
         }
-        var uiSettings by remember { mutableStateOf(MapUiSettings(zoomControlsEnabled = true)) }
-        var properties by remember {
-            mutableStateOf(MapProperties(mapType = MapType.NORMAL))
-        }
+    }
 
-        Box(
-            modifier = Modifier.fillMaxSize()
+
+
+    LaunchedEffect(Unit) {
+        permissionState.launchPermissionRequest()
+    }
+
+    if (permissionState.status.isGranted) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .clip(shape = RoundedCornerShape(32.dp))
+                .background(Color(0xFF90e0ef))
         ) {
-            GoogleMap(modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                properties = properties,
-                uiSettings = uiSettings,
-                onMapLongClick = {
-                    mapsViewModel.showBottomSheet.value = true
-                    mapsViewModel.currentLatLng.value = it
-                }) {
-                markers?.forEach { newMarker ->
-                    Marker(
-                        state = MarkerState(
-                            position = newMarker.position,
 
-                            ),
-                        title = newMarker.name,
-                        snippet = newMarker.description,
-                        icon = resizeMarkerIcon(
-                            context = LocalContext.current, icon = newMarker.icon
-                        )
-                    )
-                }
-
+            var uiSettings by remember { mutableStateOf(MapUiSettings(
+                zoomControlsEnabled = true,
+                myLocationButtonEnabled = true,
+                )) }
+            var properties by remember {
+                mutableStateOf(MapProperties(
+                    mapType = MapType.NORMAL,
+                    isMyLocationEnabled = true)
+                )
             }
-            Switch(modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(vertical = 16.dp, horizontal = 16.dp),
-                checked = uiSettings.zoomControlsEnabled,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color(0xFF8FDEED),
-                    checkedTrackColor = Color(0xFFC8EEF6),
-                    uncheckedThumbColor = Color(0xFFC8EEF6),
-                    uncheckedTrackColor = Color(0xFF8FDEED)
 
-                ),
-                onCheckedChange = {
-                    uiSettings = uiSettings.copy(zoomControlsEnabled = it)
-                    properties = if (it) {
-                        properties.copy(mapType = MapType.NORMAL)
-                    } else {
-                        properties.copy(mapType = MapType.SATELLITE)
+            Box(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                GoogleMap(modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    properties = properties,
+                    uiSettings = uiSettings,
+                    onMapLongClick = {
+                        mapsViewModel.showBottomSheet.value = true
+                        mapsViewModel.currentLatLng.value = it
+                    }) {
+                    markers?.forEach { newMarker ->
+                        Marker(
+                            state = MarkerState(
+                                position = newMarker.position,
+
+                                ),
+                            title = newMarker.name,
+                            snippet = newMarker.description,
+                            icon = resizeMarkerIcon(
+                                context = LocalContext.current, icon = newMarker.icon
+                            )
+                        )
                     }
-                })
+
+                }
+                Switch(modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(vertical = 16.dp, horizontal = 16.dp),
+                    checked = uiSettings.zoomControlsEnabled,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color(0xFF8FDEED),
+                        checkedTrackColor = Color(0xFFC8EEF6),
+                        uncheckedThumbColor = Color(0xFFC8EEF6),
+                        uncheckedTrackColor = Color(0xFF8FDEED)
+
+                    ),
+                    onCheckedChange = {
+                        uiSettings = uiSettings.copy(zoomControlsEnabled = it)
+                        properties = if (it) {
+                            properties.copy(mapType = MapType.NORMAL)
+                        } else {
+                            properties.copy(mapType = MapType.SATELLITE)
+                        }
+                    })
+            }
+
         }
 
 
+    } else {
+        Text(text = "Permission required")
     }
 }
 
@@ -319,7 +366,11 @@ fun resizeMarkerIcon(context: Context, icon: Int): BitmapDescriptor {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomSheet(onDismiss: () -> Unit, mapsViewModel: MapsViewModel, navController: NavController) {
+fun BottomSheet(
+    onDismiss: () -> Unit,
+    mapsViewModel: MapsViewModel,
+    navController: NavController
+) {
     val modalBotomSheetState = rememberModalBottomSheetState()
 
     ModalBottomSheet(
@@ -344,6 +395,10 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
     var snippet by remember { mutableStateOf("") }
     val currentLatLng by mapsViewModel.currentLatLng.observeAsState(LatLng(0.0, 0.0))
     val iconsList = mapsViewModel.iconsList
+    val context = LocalContext.current
+    val defaultImageBitmap =
+        BitmapFactory.decodeResource(context.resources, R.drawable.no_image)
+
 
     var selectedIconNum by remember { mutableIntStateOf(0) }
     Column(
@@ -357,20 +412,20 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
             value = name,
             onValueChange = { name = it },
             placeholder = {
-            Text(
-                "Nombre del marcador",
-                color = Color(0xFF03045e)
-            )
-        }, colors = TextFieldDefaults.colors(
-            cursorColor = Color(0xFF03045e),
-            focusedIndicatorColor = Color(0xFFcaf0f8),
-            unfocusedIndicatorColor = Color(
-                0xFFcaf0f8
-            ),
-            unfocusedContainerColor = Color(0xFFcaf0f8),
-            focusedContainerColor = Color(0xFFcaf0f8),
-            focusedTextColor = Color(0xFF03045e),
-        ), shape = RoundedCornerShape(8.dp)
+                Text(
+                    "Nombre del marcador",
+                    color = Color(0xFF03045e)
+                )
+            }, colors = TextFieldDefaults.colors(
+                cursorColor = Color(0xFF03045e),
+                focusedIndicatorColor = Color(0xFFcaf0f8),
+                unfocusedIndicatorColor = Color(
+                    0xFFcaf0f8
+                ),
+                unfocusedContainerColor = Color(0xFFcaf0f8),
+                focusedContainerColor = Color(0xFFcaf0f8),
+                focusedTextColor = Color(0xFF03045e),
+            ), shape = RoundedCornerShape(8.dp)
         )
         Spacer(modifier = Modifier.padding(4.dp))
 
@@ -378,20 +433,20 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
             value = snippet,
             onValueChange = { snippet = it },
             placeholder = {
-            Text(
-                "Descripción del marcador",
-                color = Color(0xFF03045e)
+                Text(
+                    "Descripción del marcador",
+                    color = Color(0xFF03045e)
+                )
+            }, colors = TextFieldDefaults.colors(
+                cursorColor = Color(0xFF03045e),
+                focusedIndicatorColor = Color(0xFFcaf0f8),
+                unfocusedIndicatorColor = Color(
+                    0xFFcaf0f8
+                ),
+                unfocusedContainerColor = Color(0xFFcaf0f8),
+                focusedContainerColor = Color(0xFFcaf0f8),
+                focusedTextColor = Color(0xFF03045e),
             )
-        }, colors = TextFieldDefaults.colors(
-            cursorColor = Color(0xFF03045e),
-            focusedIndicatorColor = Color(0xFFcaf0f8),
-            unfocusedIndicatorColor = Color(
-                0xFFcaf0f8
-            ),
-            unfocusedContainerColor = Color(0xFFcaf0f8),
-            focusedContainerColor = Color(0xFFcaf0f8),
-            focusedTextColor = Color(0xFF03045e),
-        )
         )
 
 
@@ -416,13 +471,20 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
             }
         }
         CameraScreen(navController, mapsViewModel)
-        Spacer(modifier =Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Button(
             modifier = Modifier
                 .padding(bottom = 16.dp)
                 .fillMaxWidth(0.8f), onClick = {
+
                 val newMarker =
-                    CustomMarker(name, snippet, currentLatLng, iconsList[selectedIconNum], mapsViewModel.photoTaken.value!!)
+                    CustomMarker(
+                        name,
+                        snippet,
+                        currentLatLng,
+                        iconsList[selectedIconNum],
+//                        mapsViewModel.photoTaken.value ?: defaultImageBitmap
+                    )
                 mapsViewModel.addMarker(newMarker)
                 mapsViewModel.showBottomSheet.value = false
             }, colors = ButtonDefaults.buttonColors(
@@ -493,16 +555,18 @@ fun CameraScreen(navController: NavController, mapsViewModel: MapsViewModel) {
             }
             Spacer(modifier = Modifier.width(8.dp))
             photoTaken?.let { BitmapPainter(it.asImageBitmap()) }
-                ?.let { Image(
-                    painter = it,
-                    contentDescription = "photo",
-                    modifier = Modifier
-                        .width(120.dp)
-                        .height(120.dp)
-                        .clip(CircleShape)
-                        .border(3.dp, Color(0xFFcaf0f8), CircleShape),
-                    contentScale = ContentScale.Crop
-                        )}
+                ?.let {
+                    Image(
+                        painter = it,
+                        contentDescription = "photo",
+                        modifier = Modifier
+                            .width(120.dp)
+                            .height(120.dp)
+                            .clip(CircleShape)
+                            .border(3.dp, Color(0xFFcaf0f8), CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                }
         }
         if (showPermDenied) {
             PermissionDeclinedScreen()

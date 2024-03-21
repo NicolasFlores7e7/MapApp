@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "549884763650",
+    "project_id": "moonlit-bucksaw-416311",
+    "storage_bucket": "moonlit-bucksaw-416311.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:549884763650:android:ef36790c6e686c7f74511b",
+        "android_client_info": {
+          "package_name": "com.example.mapsapps"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLhjOFHgEmGKxDY3eGqGSwb8ASSIpnPtk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

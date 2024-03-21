@@ -97,19 +97,19 @@ fun MarkerItem(marker: CustomMarker, image: Int) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ){
-                Image(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .border(
-                            3.dp,
-                            Color(0xFFcaf0f8),
-                            RoundedCornerShape(8.dp)
-                        ),
-                    painter = BitmapPainter(marker.image.asImageBitmap()),
-                    contentDescription = "image",
-                    contentScale = ContentScale.Crop
-                )
+//                Image(
+//                    modifier = Modifier
+//                        .size(100.dp)
+//                        .clip(RoundedCornerShape(8.dp))
+//                        .border(
+//                            3.dp,
+//                            Color(0xFFcaf0f8),
+//                            RoundedCornerShape(8.dp)
+//                        ),
+//                    painter = BitmapPainter(marker.image.asImageBitmap()),
+//                    contentDescription = "image",
+//                    contentScale = ContentScale.Crop
+//                )
                 Spacer(modifier =Modifier.height(8.dp))
                 Image(
                     painter = painterResource(id = image),
