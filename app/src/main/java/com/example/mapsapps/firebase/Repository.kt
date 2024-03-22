@@ -1,6 +1,7 @@
 package com.example.mapsapps.firebase
 
 
+import android.net.Uri
 import android.util.Log
 import com.example.mapsapps.models.CustomMarker
 import com.google.firebase.firestore.CollectionReference
@@ -8,6 +9,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import android.util.Base64
 import android.widget.Toast
 import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.storage.FirebaseStorage
@@ -31,7 +34,7 @@ class Repository {
                     ),
                     "descripcion" to marker.description,
                     "tipo" to marker.icon,
-//                "imagenes" to marker.image
+                    "imagenes" to marker.image
                 )
             )
     }
@@ -78,27 +81,23 @@ class Repository {
             }
     }
 
-//    fun uploadImage() {
-//        val formatter = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
-//        val now = Date()
-//        val filename = formatter.format(now)
-//        val storage = FirebaseStorage.getInstance().getReference("images/$filename")
-//        storage.putFile(imageUri).addOnSuccessListener {
-//            binding.imageView.setImageURI(null)
-//            Toast.makeText(requireContext(), "Imagen subida correctamente", Toast.LENGTH_SHORT)
-//                .show()
-//        }
-//            .addOnFailureListener {}
-//        Toast.makeText(requireContext(), "Error al subir la imagen", Toast.LENGTH_SHORT).show()
-//    }
-//}
+    fun uploadImage(imageUri: Uri): LiveData<String> {
+        val uploadResult = MutableLiveData<String>()
+        val formatter = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
+        val now = Date()
+        val filename = formatter.format(now)
+        val storage = FirebaseStorage.getInstance().getReference("images/$filename")
+        storage.putFile(imageUri).addOnSuccessListener { taskSnapshot ->
+            taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
+                uploadResult.value = uri.toString()
+                println(uri.toString())
+            }
+        }
+            .addOnFailureListener {
+                uploadResult.value = "Error al subir la imagen"
+            }
+        return uploadResult
+    }
 
-//fun getImageUrl(imageName: String): Task<DocumentSnapshot> {
-//    val database = FirebaseFirestore.getInstance()
-//    val imageRef = database.collection("images").document(imageName)
-//    return imageRef.get().addOnFailureListener { exception ->
-//        println("Error al obtener el documento: ${exception.message}")
-//    }
-//}
 
 }

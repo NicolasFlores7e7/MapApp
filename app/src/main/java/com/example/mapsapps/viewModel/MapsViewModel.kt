@@ -1,6 +1,8 @@
 package com.example.mapsapps.viewModel
 
 import android.graphics.Bitmap
+import android.net.Uri
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.mapsapps.R
@@ -57,31 +59,10 @@ class MapsViewModel : ViewModel() {
         _photoTaken.value = bitmap
     }
 
-    fun addPhotoToRepo(bitmap: Bitmap, imageName: String) {
-        val baos = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
-        val data = baos.toByteArray()
-        repository.uploadImage(data, imageName)
-        val image = repository.getImageUrl(imageName).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                val document = task.result
-                if (document != null) {
-                    val imageUrl = document.getString("imageData")
-                    if (imageUrl != null) {
-                        _imageList.value?.apply { add(imageUrl) }
-                        _imageList.value?.forEach { url ->
-                            println("URL de la imagen: $url")
-                        }
-                    } else {
-                        println("El campo 'imageData' no existe en el documento")
-                    }
-                } else {
-                    println("No se pudo obtener el documento")
-                }
-            } else {
-                println("Error al obtener el documento: ${task.exception?.message}")
-            }
-        }
+    fun addPhotoToRepo(imageUri: Uri): LiveData<String> {
+
+        return repository.uploadImage(imageUri)
     }
+
 }
 

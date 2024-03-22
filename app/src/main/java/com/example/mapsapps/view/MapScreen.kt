@@ -70,6 +70,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
@@ -106,6 +107,9 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 
 //COLOR PATELLETE https://coolors.co/03045e-0077b6-00b4d8-90e0ef-caf0f8
 // RECURSO GUAPO https://proandroiddev.com/mapping-experiences-with-google-maps-and-jetpack-compose-e0cca15c4359
@@ -397,6 +401,10 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
     val context = LocalContext.current
     val defaultImageBitmap =
         BitmapFactory.decodeResource(context.resources, R.drawable.no_image)
+    val uploadResult by mapsViewModel.addPhotoToRepo(imageUri).observeAsState()
+
+
+
 
 
     var selectedIconNum by remember { mutableIntStateOf(0) }
@@ -476,17 +484,21 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
                 .padding(bottom = 16.dp)
                 .fillMaxWidth(0.8f), onClick = {
 
-                val newMarker =
-                    CustomMarker(
-                        name,
-                        snippet,
-                        currentLatLng,
-                        iconsList[selectedIconNum],
-//                        mapsViewModel.photoTaken.value ?: defaultImageBitmap
-                    )
-                mapsViewModel.addMarker(newMarker)
                 mapsViewModel.showBottomSheet.value = false
-                mapsViewModel.addPhotoToRepo(mapsViewModel.photoTaken.value ?: defaultImageBitmap, name)
+                val bitmap = mapsViewModel.photoTaken.value?.asImageBitmap()?.asAndroidBitmap()
+                val baos = ByteArrayOutputStream()
+                bitmap?.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+                val data = baos.toByteArray()
+                val imageUri = byteArrayToUri(context, data)
+                mapsViewModel.addPhotoToRepo(imageUri)
+                val newMarker = CustomMarker(
+                    name = name,
+                    description = snippet,
+                    position = currentLatLng,
+                    icon = iconsList[selectedIconNum],
+                    image = imageUri.toString()
+                )
+                mapsViewModel.addMarker(newMarker)
             }, colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFcaf0f8), contentColor = Color(0xFF03045e)
             ), shape = RoundedCornerShape(8.dp)
@@ -500,7 +512,15 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
 
     }
 }
-
+fun byteArrayToUri(context: Context, byteArray: ByteArray): Uri {
+    val tempFile = File.createTempFile("image", null, context.cacheDir).apply {
+        deleteOnExit()
+    }
+    FileOutputStream(tempFile).use {
+        it.write(byteArray)
+    }
+    return Uri.fromFile(tempFile)
+}
 @Composable
 fun CameraScreen(navController: NavController, mapsViewModel: MapsViewModel) {
     val context = LocalContext.current
