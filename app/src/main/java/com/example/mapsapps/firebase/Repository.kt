@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.storage.FirebaseStorage
@@ -42,30 +43,19 @@ class Repository {
     fun getMarkersFromDataBase(): CollectionReference {
         return database.collection("markers")
     }
+    fun documentToMarker(document: DocumentSnapshot): CustomMarker {
+        val name = document.getString("nombre") ?: ""
+        val description = document.getString("descripcion") ?: ""
+        val icon = document.getLong("tipo")?.toInt() ?: 0
+        val image = document.getString("imagenes") ?: ""
+        val positionMap = document.get("ubicacion") as? Map<String, Double>
+        val position = LatLng(
+            positionMap?.get("latitude") ?: 0.0,
+            positionMap?.get("longitude") ?: 0.0
+        )
+        return CustomMarker(name, description, position, icon, image)
+    }
 
-    //    fun editMarker(marker: CustomMarker){
-//        database.collection("markers")
-//            .whereEqualTo("nombre",marker.name)
-//            .get()
-//            .addOnSuccessListener { documents ->
-//                for (document in documents) {
-//                    database.collection("markers").document(document.id)
-//                        .update(hashMapOf(
-//                            "nombre" to marker.name,
-//                            "ubicacion" to hashMapOf(
-//                                "latitude" to marker.position.latitude,
-//                                "longitude" to marker.position.longitude
-//                            ),
-//                            "descripcion" to marker.position,
-//                            "tipo" to marker.icon,
-////                            "imagenes" to marker.image
-//                        ))
-//                }
-//            }
-//            .addOnFailureListener { exception ->
-//                Log.w("Error", "Error getting documents: ", exception)
-//            }
-//    }
     fun removeMarker(marker: CustomMarker) {
         database.collection("markers")
             .whereEqualTo("nombre", marker.name)
@@ -90,7 +80,6 @@ class Repository {
         storage.putFile(imageUri).addOnSuccessListener { taskSnapshot ->
             taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
                 uploadResult.value = uri.toString()
-                println(uri.toString())
             }
         }
             .addOnFailureListener {

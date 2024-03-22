@@ -25,8 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -35,8 +33,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.example.mapsapps.models.CustomMarker
 import com.example.mapsapps.viewModel.MapsViewModel
+import com.bumptech.glide.integration.compose.GlideImage
 
 @Composable
 fun MarkerListScreen(navController: NavController, mapsViewModel: MapsViewModel) {
@@ -71,6 +71,7 @@ fun MarkerListItem(mapsViewModel: MapsViewModel) {
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun MarkerItem(marker: CustomMarker, image: Int) {
     Card(
@@ -97,19 +98,15 @@ fun MarkerItem(marker: CustomMarker, image: Int) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ){
-//                Image(
-//                    modifier = Modifier
-//                        .size(100.dp)
-//                        .clip(RoundedCornerShape(8.dp))
-//                        .border(
-//                            3.dp,
-//                            Color(0xFFcaf0f8),
-//                            RoundedCornerShape(8.dp)
-//                        ),
-//                    painter = BitmapPainter(marker.image.asImageBitmap()),
-//                    contentDescription = "image",
-//                    contentScale = ContentScale.Crop
-//                )
+                GlideImage(
+                   model = marker.image,
+                    contentDescription = "photo",
+                    contentScale = ContentScale.Inside,
+                    modifier = Modifier
+                        .size(150.dp)
+                        .clip(RoundedCornerShape(32.dp))
+                        .padding(top = 8.dp),
+                )
                 Spacer(modifier =Modifier.height(8.dp))
                 Image(
                     painter = painterResource(id = image),

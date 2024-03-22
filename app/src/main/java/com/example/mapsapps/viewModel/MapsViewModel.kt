@@ -2,6 +2,7 @@ package com.example.mapsapps.viewModel
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -13,7 +14,23 @@ import java.io.ByteArrayOutputStream
 
 class MapsViewModel : ViewModel() {
 
-    private val _markers = MutableLiveData<MutableList<CustomMarker>>(mutableListOf())
+    private val repository = Repository()
+
+    private val _markers = MutableLiveData<MutableList<CustomMarker>>().apply {
+        repository.getMarkersFromDataBase().addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.w("Firestore", "Listen failed.", error)
+                return@addSnapshotListener
+            }
+
+            if (snapshot != null && !snapshot.isEmpty) {
+                val markers = snapshot.documents.map { repository.documentToMarker(it) }.toMutableList()
+                this.value = markers
+            } else {
+                Log.d("Firestore", "Current data: null")
+            }
+        }
+    }
     val markers = _markers
     private val _showBottomSheet = MutableLiveData(false)
     val showBottomSheet = _showBottomSheet
@@ -35,7 +52,6 @@ class MapsViewModel : ViewModel() {
 
     private val _photoTaken = MutableLiveData<Bitmap?>()
     val photoTaken = _photoTaken
-    private val repository = Repository()
     private val _imageList = MutableLiveData<MutableList<String>>(mutableListOf())
     val imageList = _imageList
     fun addMarker(marker: CustomMarker) {

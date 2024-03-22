@@ -13,6 +13,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -81,6 +82,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
+import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -294,14 +296,19 @@ fun Map(mapsViewModel: MapsViewModel) {
                 .background(Color(0xFF90e0ef))
         ) {
 
-            var uiSettings by remember { mutableStateOf(MapUiSettings(
-                zoomControlsEnabled = true,
-                myLocationButtonEnabled = true,
-                )) }
+            var uiSettings by remember {
+                mutableStateOf(
+                    MapUiSettings(
+                        zoomControlsEnabled = true,
+                        myLocationButtonEnabled = true,
+                    )
+                )
+            }
             var properties by remember {
-                mutableStateOf(MapProperties(
-                    mapType = MapType.NORMAL,
-                    isMyLocationEnabled = true)
+                mutableStateOf(
+                    MapProperties(
+                        mapType = MapType.NORMAL, isMyLocationEnabled = true
+                    )
                 )
             }
 
@@ -316,20 +323,18 @@ fun Map(mapsViewModel: MapsViewModel) {
                         mapsViewModel.showBottomSheet.value = true
                         mapsViewModel.currentLatLng.value = it
                     }) {
-                    markers?.forEach { newMarker ->
+                    markers.forEach { newMarker ->
                         Marker(
                             state = MarkerState(
                                 position = newMarker.position,
-
-                                ),
+                            ),
                             title = newMarker.name,
                             snippet = newMarker.description,
                             icon = resizeMarkerIcon(
-                                context = LocalContext.current, icon = newMarker.icon
+                                context = LocalContext.current, newMarker.icon
                             )
                         )
                     }
-
                 }
                 Switch(modifier = Modifier
                     .align(Alignment.TopStart)
@@ -360,19 +365,21 @@ fun Map(mapsViewModel: MapsViewModel) {
     }
 }
 
-fun resizeMarkerIcon(context: Context, icon: Int): BitmapDescriptor {
-    val bitmap: Bitmap = BitmapFactory.decodeResource(context.resources, icon)
-    val resizedBitmap = Bitmap.createScaledBitmap(bitmap, 100, 100, false)
-    return BitmapDescriptorFactory.fromBitmap(resizedBitmap)
-
+fun resizeMarkerIcon(context: Context, iconRes: Int): BitmapDescriptor {
+    val imageBitmap = BitmapFactory.decodeResource(context.resources, iconRes)
+    if (imageBitmap != null) {
+        val scaledBitmap = Bitmap.createScaledBitmap(imageBitmap, 100, 100, false)
+        return BitmapDescriptorFactory.fromBitmap(scaledBitmap)
+    } else {
+        Log.e("MapScreen", "Resource not found: $iconRes")
+        return BitmapDescriptorFactory.defaultMarker()
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheet(
-    onDismiss: () -> Unit,
-    mapsViewModel: MapsViewModel,
-    navController: NavController
+    onDismiss: () -> Unit, mapsViewModel: MapsViewModel, navController: NavController
 ) {
     val modalBotomSheetState = rememberModalBottomSheetState()
 
@@ -381,8 +388,7 @@ fun BottomSheet(
         sheetState = modalBotomSheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() },
         containerColor = Color(0xFF8FDFEE),
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
 
 
         ) {
@@ -399,13 +405,6 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
     val currentLatLng by mapsViewModel.currentLatLng.observeAsState(LatLng(0.0, 0.0))
     val iconsList = mapsViewModel.iconsList
     val context = LocalContext.current
-    val defaultImageBitmap =
-        BitmapFactory.decodeResource(context.resources, R.drawable.no_image)
-    val uploadResult by mapsViewModel.addPhotoToRepo(imageUri).observeAsState()
-
-
-
-
 
     var selectedIconNum by remember { mutableIntStateOf(0) }
     Column(
@@ -413,49 +412,35 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
             .fillMaxWidth()
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
-
     ) {
-        TextField(
-            value = name,
-            onValueChange = { name = it },
-            placeholder = {
-                Text(
-                    "Nombre del marcador",
-                    color = Color(0xFF03045e)
-                )
-            }, colors = TextFieldDefaults.colors(
-                cursorColor = Color(0xFF03045e),
-                focusedIndicatorColor = Color(0xFFcaf0f8),
-                unfocusedIndicatorColor = Color(
-                    0xFFcaf0f8
-                ),
-                unfocusedContainerColor = Color(0xFFcaf0f8),
-                focusedContainerColor = Color(0xFFcaf0f8),
-                focusedTextColor = Color(0xFF03045e),
-            ), shape = RoundedCornerShape(8.dp)
+        TextField(value = name, onValueChange = { name = it }, placeholder = {
+            Text(
+                "Nombre del marcador", color = Color(0xFF03045e)
+            )
+        }, colors = TextFieldDefaults.colors(
+            cursorColor = Color(0xFF03045e),
+            focusedIndicatorColor = Color(0xFFcaf0f8),
+            unfocusedIndicatorColor = Color(0xFFcaf0f8),
+            unfocusedContainerColor = Color(0xFFcaf0f8),
+            focusedContainerColor = Color(0xFFcaf0f8),
+            focusedTextColor = Color(0xFF03045e),
+        ), shape = RoundedCornerShape(8.dp)
         )
         Spacer(modifier = Modifier.padding(4.dp))
 
-        TextField(
-            value = snippet,
-            onValueChange = { snippet = it },
-            placeholder = {
-                Text(
-                    "Descripción del marcador",
-                    color = Color(0xFF03045e)
-                )
-            }, colors = TextFieldDefaults.colors(
-                cursorColor = Color(0xFF03045e),
-                focusedIndicatorColor = Color(0xFFcaf0f8),
-                unfocusedIndicatorColor = Color(
-                    0xFFcaf0f8
-                ),
-                unfocusedContainerColor = Color(0xFFcaf0f8),
-                focusedContainerColor = Color(0xFFcaf0f8),
-                focusedTextColor = Color(0xFF03045e),
+        TextField(value = snippet, onValueChange = { snippet = it }, placeholder = {
+            Text(
+                "Descripción del marcador", color = Color(0xFF03045e)
             )
+        }, colors = TextFieldDefaults.colors(
+            cursorColor = Color(0xFF03045e),
+            focusedIndicatorColor = Color(0xFFcaf0f8),
+            unfocusedIndicatorColor = Color(0xFFcaf0f8),
+            unfocusedContainerColor = Color(0xFFcaf0f8),
+            focusedContainerColor = Color(0xFFcaf0f8),
+            focusedTextColor = Color(0xFF03045e),
         )
-
+        )
 
         Spacer(modifier = Modifier.padding(8.dp))
 
@@ -465,7 +450,6 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
                     modifier = Modifier
                         .padding(8.dp)
                         .clip(RoundedCornerShape(8.dp))
-
                 ) {
                     Image(painter = painterResource(id = icon),
                         contentDescription = "icon",
@@ -479,37 +463,44 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
         }
         CameraScreen(navController, mapsViewModel)
         Spacer(modifier = Modifier.height(8.dp))
+
         Button(
             modifier = Modifier
                 .padding(bottom = 16.dp)
                 .fillMaxWidth(0.8f), onClick = {
 
                 mapsViewModel.showBottomSheet.value = false
+
                 val bitmap = mapsViewModel.photoTaken.value?.asImageBitmap()?.asAndroidBitmap()
+
                 val baos = ByteArrayOutputStream()
                 bitmap?.compress(Bitmap.CompressFormat.JPEG, 100, baos)
                 val data = baos.toByteArray()
+
                 val imageUri = byteArrayToUri(context, data)
-                mapsViewModel.addPhotoToRepo(imageUri)
-                val newMarker = CustomMarker(
-                    name = name,
-                    description = snippet,
-                    position = currentLatLng,
-                    icon = iconsList[selectedIconNum],
-                    image = imageUri.toString()
-                )
-                mapsViewModel.addMarker(newMarker)
+
+                val uploadResult = mapsViewModel.addPhotoToRepo(imageUri)
+
+                uploadResult.observe(context as LifecycleOwner) { imageUrl ->
+                    if (imageUrl != null) {
+                        val newMarker = CustomMarker(
+                            name = name,
+                            description = snippet,
+                            position = currentLatLng,
+                            icon = iconsList[selectedIconNum],
+                            image = imageUrl
+                        )
+
+                        mapsViewModel.addMarker(newMarker)
+                    }
+                }
             }, colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFcaf0f8), contentColor = Color(0xFF03045e)
             ), shape = RoundedCornerShape(8.dp)
-
         ) {
             Text(text = "Agregar marcador")
-
         }
         Spacer(modifier = Modifier.padding(8.dp))
-
-
     }
 }
 fun byteArrayToUri(context: Context, byteArray: ByteArray): Uri {
@@ -521,6 +512,7 @@ fun byteArrayToUri(context: Context, byteArray: ByteArray): Uri {
     }
     return Uri.fromFile(tempFile)
 }
+
 @Composable
 fun CameraScreen(navController: NavController, mapsViewModel: MapsViewModel) {
     val context = LocalContext.current
@@ -538,8 +530,7 @@ fun CameraScreen(navController: NavController, mapsViewModel: MapsViewModel) {
             } else {
                 mapsViewModel.setShouldPermRationale(
                     shouldShowRequestPermissionRationale(
-                        context as Activity,
-                        Manifest.permission.CAMERA
+                        context as Activity, Manifest.permission.CAMERA
                     )
                 )
                 if (!shouldShowPermRationale) {
@@ -547,13 +538,11 @@ fun CameraScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                     mapsViewModel.setShowPermDenied(true)
                 }
             }
-        }
-    )
+        })
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Button(
@@ -564,29 +553,25 @@ fun CameraScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                         navController.navigate(Routes.PhotoScreen.route)
                         mapsViewModel.showBottomSheet.value = false
                     }
-                }, modifier = Modifier
-                    .padding(top = 8.dp),
-                colors = ButtonDefaults.buttonColors(
+                }, modifier = Modifier.padding(top = 8.dp), colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFcaf0f8), contentColor = Color(0xFF03045e)
-                ),
-                shape = RoundedCornerShape(8.dp)
+                ), shape = RoundedCornerShape(8.dp)
             ) {
                 Text(text = "Take photo")
             }
             Spacer(modifier = Modifier.width(8.dp))
-            photoTaken?.let { BitmapPainter(it.asImageBitmap()) }
-                ?.let {
-                    Image(
-                        painter = it,
-                        contentDescription = "photo",
-                        modifier = Modifier
-                            .width(120.dp)
-                            .height(120.dp)
-                            .clip(CircleShape)
-                            .border(3.dp, Color(0xFFcaf0f8), CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                }
+            photoTaken?.let { BitmapPainter(it.asImageBitmap()) }?.let {
+                Image(
+                    painter = it,
+                    contentDescription = "photo",
+                    modifier = Modifier
+                        .width(120.dp)
+                        .height(120.dp)
+                        .clip(CircleShape)
+                        .border(3.dp, Color(0xFFcaf0f8), CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
         if (showPermDenied) {
             PermissionDeclinedScreen()
@@ -598,15 +583,13 @@ fun CameraScreen(navController: NavController, mapsViewModel: MapsViewModel) {
 fun PermissionDeclinedScreen() {
     val context = LocalContext.current
     Column(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
 
     ) {
         Text(
-            text = "Permission required to take photos",
-            fontWeight = FontWeight.Bold
+            text = "Permission required to take photos", fontWeight = FontWeight.Bold
         )
         Text(
             text = "This app need access to your camera to take photos"
