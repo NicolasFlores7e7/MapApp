@@ -201,7 +201,6 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navControlle
                 startDestination = Routes.Map.route
             ) {
                 composable(Routes.Login.route) { LogInScreen(navController, mapsViewModel) }
-                composable(Routes.AddMarker.route) { AddMarkerScreen(navController, mapsViewModel) }
                 composable(Routes.Map.route) { Map(mapsViewModel) }
                 composable(Routes.MarkerList.route) {
                     MarkerListScreen(
@@ -487,6 +486,7 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
                     )
                 mapsViewModel.addMarker(newMarker)
                 mapsViewModel.showBottomSheet.value = false
+                mapsViewModel.addPhotoToRepo(mapsViewModel.photoTaken.value ?: defaultImageBitmap, name)
             }, colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFcaf0f8), contentColor = Color(0xFF03045e)
             ), shape = RoundedCornerShape(8.dp)

@@ -7,6 +7,7 @@ import com.example.mapsapps.R
 import com.example.mapsapps.firebase.Repository
 import com.example.mapsapps.models.CustomMarker
 import com.google.android.gms.maps.model.LatLng
+import java.io.ByteArrayOutputStream
 
 class MapsViewModel : ViewModel() {
 
@@ -33,11 +34,11 @@ class MapsViewModel : ViewModel() {
     private val _photoTaken = MutableLiveData<Bitmap?>()
     val photoTaken = _photoTaken
     private val repository = Repository()
-
+    private val _imageList = MutableLiveData<MutableList<String>>(mutableListOf())
+    val imageList = _imageList
     fun addMarker(marker: CustomMarker) {
         _markers.value?.apply { add(marker) }
         repository.addMarker(marker)
-
     }
 
     fun setCameraPermission(granted: Boolean) {
@@ -56,4 +57,31 @@ class MapsViewModel : ViewModel() {
         _photoTaken.value = bitmap
     }
 
+    fun addPhotoToRepo(bitmap: Bitmap, imageName: String) {
+        val baos = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+        val data = baos.toByteArray()
+        repository.uploadImage(data, imageName)
+        val image = repository.getImageUrl(imageName).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val document = task.result
+                if (document != null) {
+                    val imageUrl = document.getString("imageData")
+                    if (imageUrl != null) {
+                        _imageList.value?.apply { add(imageUrl) }
+                        _imageList.value?.forEach { url ->
+                            println("URL de la imagen: $url")
+                        }
+                    } else {
+                        println("El campo 'imageData' no existe en el documento")
+                    }
+                } else {
+                    println("No se pudo obtener el documento")
+                }
+            } else {
+                println("Error al obtener el documento: ${task.exception?.message}")
+            }
+        }
+    }
 }
+
