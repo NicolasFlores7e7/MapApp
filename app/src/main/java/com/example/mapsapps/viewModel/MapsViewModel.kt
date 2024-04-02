@@ -15,7 +15,14 @@ import java.io.ByteArrayOutputStream
 class MapsViewModel : ViewModel() {
 
     private val repository = Repository()
-
+    private val _markerName = MutableLiveData<String>()
+    val markerName = _markerName
+    private val _markerDescription = MutableLiveData<String>()
+    val markerDescription = _markerDescription
+    private val _iconNum = MutableLiveData<Int>()
+    val iconNum = _iconNum
+    private val _selectedMarker = MutableLiveData<CustomMarker>()
+    val selectedMarker = _selectedMarker
     private val _markers = MutableLiveData<MutableList<CustomMarker>>().apply {
         repository.getMarkersFromDataBase().addSnapshotListener { snapshot, error ->
             if (error != null) {
@@ -24,7 +31,8 @@ class MapsViewModel : ViewModel() {
             }
 
             if (snapshot != null && !snapshot.isEmpty) {
-                val markers = snapshot.documents.map { repository.documentToMarker(it) }.toMutableList()
+                val markers =
+                    snapshot.documents.map { repository.documentToMarker(it) }.toMutableList()
                 this.value = markers
             } else {
                 Log.d("Firestore", "Current data: null")
@@ -52,13 +60,26 @@ class MapsViewModel : ViewModel() {
 
     private val _photoTaken = MutableLiveData<Bitmap?>()
     val photoTaken = _photoTaken
-    private val _imageList = MutableLiveData<MutableList<String>>(mutableListOf())
-    val imageList = _imageList
+
+
     fun addMarker(marker: CustomMarker) {
+        val updatedMarkers = markers.value?.filter { it != marker }
         _markers.value?.apply { add(marker) }
         repository.addMarker(marker)
+        markers.value = updatedMarkers as MutableList<CustomMarker>?
     }
-
+    fun setMarkerName(name: String) {
+        _markerName.value = name
+    }
+    fun setMarkerDescription(description: String) {
+        _markerDescription.value = description
+    }
+    fun setSelectedMarker(marker: CustomMarker) {
+        _selectedMarker.value = marker
+    }
+    fun setIconNum(num: Int) {
+        _iconNum.value = num
+    }
     fun setCameraPermission(granted: Boolean) {
         _cameraPermission.value = granted
     }
@@ -76,9 +97,14 @@ class MapsViewModel : ViewModel() {
     }
 
     fun addPhotoToRepo(imageUri: Uri): LiveData<String> {
-
         return repository.uploadImage(imageUri)
     }
 
+    fun deleteMarker(marker: CustomMarker) {
+        val updatedMarkers = markers.value?.filter { it != marker }
+        repository.removeMarker(marker)
+        repository.deleteImage(marker.image)
+        markers.value = updatedMarkers as MutableList<CustomMarker>?
+    }
 }
 

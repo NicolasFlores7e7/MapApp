@@ -214,6 +214,7 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navControlle
                     )
                 }
                 composable(Routes.PhotoScreen.route) { PhotoScreen(navController, mapsViewModel) }
+                composable(Routes.DetailScreen.route) { DetailedScreen(mapsViewModel, navController) }
 
             }
         }
@@ -400,20 +401,20 @@ fun BottomSheet(
 
 @Composable
 fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
-    var name by remember { mutableStateOf("") }
-    var snippet by remember { mutableStateOf("") }
+    val name by mapsViewModel.markerName.observeAsState("")
+    val snippet by mapsViewModel.markerDescription.observeAsState("")
     val currentLatLng by mapsViewModel.currentLatLng.observeAsState(LatLng(0.0, 0.0))
     val iconsList = mapsViewModel.iconsList
     val context = LocalContext.current
 
-    var selectedIconNum by remember { mutableIntStateOf(0) }
+    val selectedIconNum by mapsViewModel.iconNum.observeAsState()
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        TextField(value = name, onValueChange = { name = it }, placeholder = {
+        TextField(value = name, onValueChange = { mapsViewModel.setMarkerName(it) }, placeholder = {
             Text(
                 "Nombre del marcador", color = Color(0xFF03045e)
             )
@@ -428,7 +429,7 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
         )
         Spacer(modifier = Modifier.padding(4.dp))
 
-        TextField(value = snippet, onValueChange = { snippet = it }, placeholder = {
+        TextField(value = snippet, onValueChange = { mapsViewModel.setMarkerDescription(it) }, placeholder = {
             Text(
                 "Descripción del marcador", color = Color(0xFF03045e)
             )
@@ -456,7 +457,7 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
                         modifier = Modifier
                             .size(50.dp)
                             .clickable {
-                                selectedIconNum = iconsList.indexOf(icon)
+                                mapsViewModel.setIconNum(iconsList.indexOf(icon))
                             })
                 }
             }
@@ -487,7 +488,7 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
                             name = name,
                             description = snippet,
                             position = currentLatLng,
-                            icon = iconsList[selectedIconNum],
+                            icon = iconsList[mapsViewModel.iconNum.value!!],
                             image = imageUrl
                         )
 

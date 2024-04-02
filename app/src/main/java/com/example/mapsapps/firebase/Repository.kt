@@ -87,6 +87,11 @@ class Repository {
             }
         return uploadResult
     }
+    fun deleteImage(imageUri: String): Task<Void> {
+        val storage = FirebaseStorage.getInstance().getReferenceFromUrl(imageUri)
+        return storage.delete()
+    }
+
 
 
 }

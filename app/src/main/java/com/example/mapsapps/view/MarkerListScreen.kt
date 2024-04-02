@@ -3,7 +3,7 @@ package com.example.mapsapps.view
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,22 +34,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.example.mapsapps.models.CustomMarker
-import com.example.mapsapps.viewModel.MapsViewModel
 import com.bumptech.glide.integration.compose.GlideImage
+import com.example.mapsapps.models.CustomMarker
+import com.example.mapsapps.navigations.Routes
+import com.example.mapsapps.viewModel.MapsViewModel
 
 @Composable
 fun MarkerListScreen(navController: NavController, mapsViewModel: MapsViewModel) {
-    MarkerListItem(mapsViewModel)
+    MarkerListItem(mapsViewModel, navController)
 }
 
 @Composable
-fun MarkerListItem(mapsViewModel: MapsViewModel) {
+fun MarkerListItem(mapsViewModel: MapsViewModel, navController: NavController) {
     val markers: List<CustomMarker> by mapsViewModel.markers.observeAsState(listOf())
     val iconList = mapsViewModel.iconsList
     Column(
-        modifier = Modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier, horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(8.dp))
         LazyColumn(
@@ -64,7 +64,7 @@ fun MarkerListItem(mapsViewModel: MapsViewModel) {
                     iconList[4] -> iconList[4]
                     else -> iconList[0]
                 }
-                MarkerItem(marker = markers[it], icon)
+                MarkerItem(marker = markers[it], icon, mapsViewModel, navController)
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
@@ -73,17 +73,20 @@ fun MarkerListItem(mapsViewModel: MapsViewModel) {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun MarkerItem(marker: CustomMarker, image: Int) {
-    Card(
-        border = BorderStroke(
-            2.dp,
-            Color(0xFF03045e)
-        ),
+fun MarkerItem(
+    marker: CustomMarker, image: Int, mapsViewModel: MapsViewModel, navController: NavController
+) {
+    Card(border = BorderStroke(
+        2.dp, Color(0xFF03045e)
+    ),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 8.dp, end = 8.dp)
-    ) {
+            .clickable {
+                mapsViewModel.setSelectedMarker(marker)
+                navController.navigate(Routes.DetailScreen.route)
+            }) {
 
         Row(
             modifier = Modifier
@@ -92,41 +95,30 @@ fun MarkerItem(marker: CustomMarker, image: Int) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
-            Column (
+            Column(
                 modifier = Modifier
-                    .padding(top = 8.dp, bottom = 8.dp, start = 8.dp),
+                    .padding(top = 8.dp, bottom = 8.dp, start = 8.dp)
+                    .fillMaxWidth(0.3f),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
-            ){
-                GlideImage(
-                   model = marker.image,
-                    contentDescription = "photo",
-                    contentScale = ContentScale.Inside,
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(RoundedCornerShape(32.dp))
-                        .padding(top = 8.dp),
-                )
-                Spacer(modifier =Modifier.height(8.dp))
+            ) {
                 Image(
                     painter = painterResource(id = image),
                     contentDescription = "icon",
                     contentScale = ContentScale.Inside,
-                    modifier = Modifier
-                        .size(40.dp),
+                    modifier = Modifier.size(80.dp),
                 )
 
             }
             Column(
-                modifier = Modifier
-                    .padding(top = 8.dp, bottom = 8.dp),
+                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.Start,
             ) {
 
                 Text(
                     modifier = Modifier.padding(start = 8.dp, end = 8.dp),
-                    text = "Nombre del marcador:" ,
+                    text = "Nombre del marcador:",
                     textAlign = TextAlign.Start,
                     lineHeight = 20.sp,
                     fontSize = 16.sp,
@@ -137,50 +129,26 @@ fun MarkerItem(marker: CustomMarker, image: Int) {
                     )
                 Text(
                     modifier = Modifier.padding(start = 8.dp, end = 8.dp),
-                    text = marker.name ,
+                    text = marker.name,
                     textAlign = TextAlign.Start,
                     lineHeight = 20.sp,
                     fontSize = 16.sp,
                     color = Color(0xFF03045e),
 
                     )
-                Text(
-                    modifier = Modifier.padding(start = 8.dp, end = 8.dp),
-                    text = "Descripción del marcador:",
-                    lineHeight = 20.sp,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    textDecoration = TextDecoration.Underline,
-                    color = Color(0xFF03045e),
-                )
-                Text(
-                    modifier = Modifier.padding(start = 8.dp, end = 8.dp),
-                    text = marker.description ,
-                    textAlign = TextAlign.Start,
-                    lineHeight = 20.sp,
-                    fontSize = 16.sp,
-                    color = Color(0xFF03045e),
 
-                    )
-                Text(
-                    modifier = Modifier.padding(start = 8.dp, end = 8.dp),
-                    text = "Ubicación del marcador:",
-                    textAlign = TextAlign.Start,
-                    lineHeight = 20.sp,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    textDecoration = TextDecoration.Underline,
-                    color = Color(0xFF03045e),
-                )
-                Text(
-                    modifier = Modifier.padding(start = 8.dp, end = 8.dp),
-                    text = marker.position.toString(),
-                    textAlign = TextAlign.Start,
-                    lineHeight = 20.sp,
-                    fontSize = 16.sp,
-                    color = Color(0xFF03045e),
-
-                    )
+                Button(
+                    modifier = Modifier
+                        .padding(top = 8.dp, start = 16.dp)
+                        .fillMaxWidth(0.8f),
+                    onClick = { mapsViewModel.deleteMarker(marker) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFcaf0f8), contentColor = Color(0xFF03045e)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(text = "Eliminar marcador")
+                }
 
             }
 
