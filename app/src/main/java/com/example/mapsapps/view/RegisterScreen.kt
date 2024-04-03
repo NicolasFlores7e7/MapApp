@@ -1,5 +1,6 @@
 package com.example.mapsapps.view
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.example.mapsapps.R
 import com.example.mapsapps.navigations.Routes
 import com.example.mapsapps.viewModel.MapsViewModel
 
@@ -71,6 +74,12 @@ fun RegisterScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                 color = Color(0xFF03045e)
             )
             Spacer(modifier = Modifier.height(16.dp))
+            Image(painter = painterResource(id = R.drawable.ic_login),
+                contentDescription = "icono",
+                modifier = Modifier
+                    .height(200.dp)
+                    .fillMaxWidth()
+            )
             OutlinedTextField(
                 value = email,
                 onValueChange = { mapsViewModel.setMail(it) },
