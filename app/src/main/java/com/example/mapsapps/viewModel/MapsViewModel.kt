@@ -70,7 +70,14 @@ class MapsViewModel : ViewModel() {
     val email = _email
     private val _password = MutableLiveData<String>()
     val password = _password
-
+    private val _passwordCheck = MutableLiveData<String>()
+    val passwordCheck = _passwordCheck
+    private val _userId = MutableLiveData<String>()
+    val userId = _userId
+    private val _returnToLogIn = MutableLiveData(false)
+    val returnToLogIn = _returnToLogIn
+    private val _dialogOpener = MutableLiveData(false)
+    val dialogOpener = _dialogOpener
 
     fun addMarker(marker: CustomMarker) {
         val updatedMarkers = markers.value?.filter { it != marker }
@@ -125,34 +132,51 @@ class MapsViewModel : ViewModel() {
     fun setMail(email: String) {
         _email.value = email
     }
+
     fun setPassword(password: String) {
         _password.value = password
+    }
+    fun setPasswordCheck(password: String) {
+        _passwordCheck.value = password
+    }
+    fun setReturnToLogIn(value: Boolean) {
+        _returnToLogIn.value = value
+    }
+    fun setOpenerDialog(value: Boolean) {
+        _dialogOpener.value = value
     }
 
     fun registerUser(email: String, password: String) {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    TODO("Implement navigation to log IN screen")
-                } else {
-                    TODO("Implement error message")
+                if(task.isSuccessful){
+                    _returnToLogIn.value = true
+                }else{
+                    _returnToLogIn.value = false
+                    Log.d("Error", "Error registering user: ${task.exception?.message}")
                 }
             }
-        TODO("Circular progress bar")
+            .addOnFailureListener {
+                _dialogOpener.value = true
+                Log.d("Error", "Error registering user: ${it.message}")
+            }
     }
 
     fun loginUser(email: String, password: String) {
         auth.signInWithEmailAndPassword(email!!, password!!)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    TODO("Implement navigation to map screen")
+                    _userId.value = task.result.user?.uid
+                    _areWeLoggedIn.value = true
                 } else {
-                    TODO("Implement error message")
+                    _areWeLoggedIn.value = false
+                    _dialogOpener.value = true
+                    Log.d("Error", "Error logging in: ${task.result}")
                 }
             }
-        TODO("Circular progress bar")
     }
-fun logOut(){
+
+    fun logOut() {
         auth.signOut()
         TODO("Implement navigation to log IN screen")
     }

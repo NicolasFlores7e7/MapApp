@@ -22,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -41,16 +42,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.mapsapps.navigations.Routes
 import com.example.mapsapps.viewModel.MapsViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
     val email by mapsViewModel.email.observeAsState("")
     val password by mapsViewModel.password.observeAsState("")
     var passwordVisivility by remember { mutableStateOf(false) }
+    val areWeLoggedIn by mapsViewModel.areWeLoggedIn.observeAsState(false)
+    FailLogInAlert(mapsViewModel)
     Box(
         modifier = Modifier
             .fillMaxSize(),
@@ -67,7 +70,7 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Bienvenido a MapsApps! \nPor favor, inicie sesión para continuar.",
+                text = "Bienvenido a MapsApp! \nPor favor, inicie sesión para continuar.",
                 textAlign = TextAlign.Center,
                 fontSize = 20.sp,
                 color = Color(0xFF03045e)
@@ -122,7 +125,17 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                 modifier = Modifier
                     .padding(top = 8.dp, start = 16.dp)
                     .fillMaxWidth(0.8f),
-                onClick = {mapsViewModel.loginUser(email, password)},
+                onClick = {
+                    if (email.isNotEmpty() && password.isNotEmpty() && email.contains("@") && email.contains(".") && password.length >= 6) {
+                        mapsViewModel.loginUser(email, password)
+
+                    }else{
+                        mapsViewModel.setOpenerDialog(true)
+                    }
+                    if (areWeLoggedIn) {
+                        navController.navigate(Routes.Map.route)
+                    }
+                  },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFcaf0f8), contentColor = Color(0xFF03045e)
                 ),
@@ -142,6 +155,27 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                     fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier
                         .clickable { navController.navigate(Routes.Register.route) })
+            }
+        }
+    }
+}
+
+@Composable
+fun FailLogInAlert(mapsViewModel: MapsViewModel){
+    val dialogOpener by mapsViewModel.dialogOpener.observeAsState(false)
+    if (dialogOpener){
+        Dialog(onDismissRequest = { mapsViewModel.setOpenerDialog(false) }) {
+            Surface(
+                color = Color(0xFF90e0ef),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Box(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Error al iniciar sesión, intente de nuevo.",
+                        textAlign = TextAlign.Center,
+                        color = Color(0xFF03045e)
+                    )
+                }
             }
         }
     }
