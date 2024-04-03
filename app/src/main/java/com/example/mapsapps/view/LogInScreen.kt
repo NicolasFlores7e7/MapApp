@@ -1,5 +1,6 @@
 package com.example.mapsapps.view
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -44,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.example.mapsapps.R
 import com.example.mapsapps.navigations.Routes
 import com.example.mapsapps.viewModel.MapsViewModel
 
@@ -69,6 +73,12 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Image(painter = painterResource(id = R.drawable.ic_login),
+                contentDescription = "icono",
+                modifier = Modifier
+                    .height(200.dp)
+                    .fillMaxWidth()
+            )
             Text(
                 text = "Bienvenido a MapsApp! \nPor favor, inicie sesión para continuar.",
                 textAlign = TextAlign.Center,
@@ -128,13 +138,11 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                 onClick = {
                     if (email.isNotEmpty() && password.isNotEmpty() && email.contains("@") && email.contains(".") && password.length >= 6) {
                         mapsViewModel.loginUser(email, password)
-
+                        mapsViewModel.setLoggedIn(true)
                     }else{
                         mapsViewModel.setOpenerDialog(true)
                     }
-                    if (areWeLoggedIn) {
-                        navController.navigate(Routes.Map.route)
-                    }
+
                   },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFcaf0f8), contentColor = Color(0xFF03045e)
@@ -143,8 +151,13 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
             ) {
                 Text(text = "Iniciar sesión")
             }
+            LaunchedEffect(areWeLoggedIn) {
+                if (areWeLoggedIn==true) {
+                    navController.navigate(Routes.Map.route)
+                }
+            }
             Spacer(modifier = Modifier.height(16.dp))
-            Row {
+            Row(modifier = Modifier.padding(bottom = 16.dp)) {
                 Text(
                     "¿No tienes una cuenta? ",
                     color = Color(0xFF03045e)

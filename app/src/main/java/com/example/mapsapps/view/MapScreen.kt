@@ -121,7 +121,6 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     val state: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val areWeLoggedIn = mapsViewModel.areWeLoggedIn.observeAsState(false)
     ModalNavigationDrawer(drawerState = state, gesturesEnabled = state.isOpen, drawerContent = {
         ModalDrawerSheet(drawerContainerColor = Color(0xFF8FDEED),
             modifier = Modifier.clickable { scope.launch { state.close() } }) {
@@ -144,7 +143,7 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
                 )
 
             }
-            if(areWeLoggedIn.value == true){
+
                 NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp), label = {
                     Text(
                         text = "Mapa",
@@ -174,10 +173,30 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
                         state.close()
                     }
                 })
+                Column(modifier = Modifier
+                    .fillMaxSize(),
+                    verticalArrangement = Arrangement.Bottom,
+                ){
+                    NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp), label = {
+                        Text(
+                            text = "Cerrar sesión",
+                            color = Color(0xFF03045e),
+                            fontSize = 20.sp,
+                        )
+                    }, selected = false, colors = NavigationDrawerItemDefaults.colors(
+                        unselectedContainerColor = Color(0xFFcaf0f8),
+                    ), shape = RectangleShape, onClick = {
+                        navController.navigate(Routes.Login.route)
+                        mapsViewModel.logOut()
+                        scope.launch {
+                            state.close()
+                        }
+                    })
+                }
             }
 
 
-        }
+
     }) {
 
         MapAppScafold(state, mapsViewModel, navController)
@@ -191,7 +210,7 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
 fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navController: NavController) {
 
     val showBottomSheet by mapsViewModel.showBottomSheet.observeAsState(false)
-    Scaffold(topBar = { MapAppTopBar(state = state) },
+    Scaffold(topBar = { MapAppTopBar(state, mapsViewModel) },
         bottomBar = { },
         content = { paddingValues ->
         Box(
@@ -234,7 +253,8 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navControlle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MapAppTopBar(state: DrawerState) {
+fun MapAppTopBar(state: DrawerState, mapsViewModel: MapsViewModel) {
+    val areWeLoggedIn = mapsViewModel.areWeLoggedIn.observeAsState(false)
     val scope = rememberCoroutineScope()
     TopAppBar(title = {
         Text(
@@ -246,18 +266,20 @@ fun MapAppTopBar(state: DrawerState) {
     }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
         containerColor = Color(0xFF90e0ef),
     ), navigationIcon = {
-        IconButton(onClick = {
-            scope.launch {
-                state.open()
+        if(areWeLoggedIn.value==true){
+            IconButton(onClick = {
+                scope.launch {
+                    state.open()
+                }
+            }) {
+                Icon(
+                    imageVector = Icons.Filled.Menu,
+                    contentDescription = "Menu",
+                    tint = Color(0xFF03045e)
+                )
             }
-        }) {
-            Icon(
-                imageVector = Icons.Filled.Menu,
-                contentDescription = "Menu",
-                tint = Color(0xFF03045e)
-            )
-
         }
+
 
     })
 }
@@ -288,7 +310,7 @@ fun Map(mapsViewModel: MapsViewModel) {
             Log.e("Error", "Exception: %s", task.exception)
         }
     }
-
+    val userId by mapsViewModel.userId.observeAsState("")
 
 
     LaunchedEffect(Unit) {
@@ -331,7 +353,7 @@ fun Map(mapsViewModel: MapsViewModel) {
                         mapsViewModel.showBottomSheet.value = true
                         mapsViewModel.currentLatLng.value = it
                     }) {
-                    markers.forEach { newMarker ->
+                   markers.filter{ it.owner == userId}.forEach { newMarker ->
                         Marker(
                             state = MarkerState(
                                 position = newMarker.position,
@@ -496,10 +518,15 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
                             description = snippet,
                             position = currentLatLng,
                             icon = iconsList[mapsViewModel.iconNum.value!!],
-                            image = imageUrl
+                            image = imageUrl,
+                            owner = mapsViewModel.userId.value!!
                         )
 
                         mapsViewModel.addMarker(newMarker)
+                        mapsViewModel.setMarkerName("")
+                        mapsViewModel.setMarkerDescription("")
+                        mapsViewModel.setIconNum(0)
+                        mapsViewModel.addPhotoTaken(BitmapFactory.decodeResource(context.resources, R.drawable.no_image))
                     }
                 }
             }, colors = ButtonDefaults.buttonColors(

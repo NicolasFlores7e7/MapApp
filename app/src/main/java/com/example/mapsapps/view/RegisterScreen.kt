@@ -161,13 +161,18 @@ fun RegisterScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                     .fillMaxWidth(0.8f),
                 onClick = {
                     try {
-                        if (password == passwordCheck && password.isNotEmpty() && email.isNotEmpty()&& password.length>=6) {
+                        if (password == passwordCheck && password.isNotEmpty() && email.isNotEmpty() && password.length >= 6 && email.contains(
+                                "@"
+                            ) && email.contains(".")
+                        ) {
                             mapsViewModel.registerUser(email, password)
                             mapsViewModel.setReturnToLogIn(true)
                             if (returnToLogIn) {
                                 navController.navigate(Routes.Login.route)
+                                mapsViewModel.email.value = ""
+                                mapsViewModel.password.value = ""
                             }
-                        }else{
+                        } else {
                             mapsViewModel.setReturnToLogIn(false)
                             mapsViewModel.setOpenerDialog(true)
                         }
@@ -200,9 +205,9 @@ fun RegisterScreen(navController: NavController, mapsViewModel: MapsViewModel) {
 }
 
 @Composable
-fun FailRegisterAlert(mapsViewModel: MapsViewModel){
+fun FailRegisterAlert(mapsViewModel: MapsViewModel) {
     val dialogOpener by mapsViewModel.dialogOpener.observeAsState(false)
-    if (dialogOpener){
+    if (dialogOpener) {
         Dialog(onDismissRequest = { mapsViewModel.setOpenerDialog(false) }) {
             Surface(
                 color = Color(0xFF90e0ef),

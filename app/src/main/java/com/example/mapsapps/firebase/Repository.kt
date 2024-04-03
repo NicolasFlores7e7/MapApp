@@ -35,7 +35,8 @@ class Repository {
                     ),
                     "descripcion" to marker.description,
                     "tipo" to marker.icon,
-                    "imagenes" to marker.image
+                    "imagenes" to marker.image,
+                    "owner" to marker.owner
                 )
             )
     }
@@ -53,7 +54,8 @@ class Repository {
             positionMap?.get("latitude") ?: 0.0,
             positionMap?.get("longitude") ?: 0.0
         )
-        return CustomMarker(name, description, position, icon, image)
+        val owner = document.getString("owner") ?: ""
+        return CustomMarker(name, description, position, icon, image, owner)
     }
 
     fun removeMarker(marker: CustomMarker) {

@@ -142,6 +142,9 @@ class MapsViewModel : ViewModel() {
     fun setReturnToLogIn(value: Boolean) {
         _returnToLogIn.value = value
     }
+    fun setLoggedIn(value: Boolean) {
+        _areWeLoggedIn.value = value
+    }
     fun setOpenerDialog(value: Boolean) {
         _dialogOpener.value = value
     }
@@ -167,7 +170,6 @@ class MapsViewModel : ViewModel() {
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     _userId.value = task.result.user?.uid
-                    _areWeLoggedIn.value = true
                 } else {
                     _areWeLoggedIn.value = false
                     _dialogOpener.value = true
@@ -178,7 +180,9 @@ class MapsViewModel : ViewModel() {
 
     fun logOut() {
         auth.signOut()
-        TODO("Implement navigation to log IN screen")
+        _areWeLoggedIn.value = false
+        _email.value = ""
+        password.value = ""
     }
 
 }

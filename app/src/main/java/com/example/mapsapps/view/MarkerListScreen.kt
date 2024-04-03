@@ -46,7 +46,9 @@ fun MarkerListScreen(navController: NavController, mapsViewModel: MapsViewModel)
 
 @Composable
 fun MarkerListItem(mapsViewModel: MapsViewModel, navController: NavController) {
+    val userId by mapsViewModel.userId.observeAsState("")
     val markers: List<CustomMarker> by mapsViewModel.markers.observeAsState(listOf())
+    val filteredMarksPerUser = markers.filter { it.owner == userId }
     val iconList = mapsViewModel.iconsList
     Column(
         modifier = Modifier, horizontalAlignment = Alignment.CenterHorizontally
@@ -55,8 +57,8 @@ fun MarkerListItem(mapsViewModel: MapsViewModel, navController: NavController) {
         LazyColumn(
             modifier = Modifier
         ) {
-            items(markers.size) {
-                val icon = when (markers[it].icon) {
+            items(filteredMarksPerUser.size) {
+                val icon = when (filteredMarksPerUser[it].icon) {
                     iconList[0] -> iconList[0]
                     iconList[1] -> iconList[1]
                     iconList[2] -> iconList[2]
@@ -64,14 +66,13 @@ fun MarkerListItem(mapsViewModel: MapsViewModel, navController: NavController) {
                     iconList[4] -> iconList[4]
                     else -> iconList[0]
                 }
-                MarkerItem(marker = markers[it], icon, mapsViewModel, navController)
+                MarkerItem(marker = filteredMarksPerUser[it], icon, mapsViewModel, navController)
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun MarkerItem(
     marker: CustomMarker, image: Int, mapsViewModel: MapsViewModel, navController: NavController
