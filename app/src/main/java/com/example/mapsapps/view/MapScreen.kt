@@ -121,6 +121,7 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     val state: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val areWeLoggedIn = mapsViewModel.areWeLoggedIn.observeAsState(false)
     ModalNavigationDrawer(drawerState = state, gesturesEnabled = state.isOpen, drawerContent = {
         ModalDrawerSheet(drawerContainerColor = Color(0xFF8FDEED),
             modifier = Modifier.clickable { scope.launch { state.close() } }) {
@@ -143,35 +144,38 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
                 )
 
             }
-            NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp), label = {
-                Text(
-                    text = "Mapa",
-                    color = Color(0xFF03045e),
-                    fontSize = 20.sp,
-                )
-            }, selected = false, colors = NavigationDrawerItemDefaults.colors(
-                unselectedContainerColor = Color(0xFFcaf0f8),
-            ), shape = RectangleShape, onClick = {
-                navController.navigate(Routes.Map.route)
-                scope.launch {
-                    state.close()
-                }
-            })
-            NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp), label = {
-                Text(
-                    text = "Lista de marcadores",
-                    color = Color(0xFF03045e),
-                    fontSize = 20.sp,
-                )
-            }, selected = false, colors = NavigationDrawerItemDefaults.colors(
-                unselectedContainerColor = Color(0xFFcaf0f8),
-
+            if(areWeLoggedIn.value == true){
+                NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp), label = {
+                    Text(
+                        text = "Mapa",
+                        color = Color(0xFF03045e),
+                        fontSize = 20.sp,
+                    )
+                }, selected = false, colors = NavigationDrawerItemDefaults.colors(
+                    unselectedContainerColor = Color(0xFFcaf0f8),
                 ), shape = RectangleShape, onClick = {
-                navController.navigate(Routes.MarkerList.route)
-                scope.launch {
-                    state.close()
-                }
-            })
+                    navController.navigate(Routes.Map.route)
+                    scope.launch {
+                        state.close()
+                    }
+                })
+                NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp), label = {
+                    Text(
+                        text = "Lista de marcadores",
+                        color = Color(0xFF03045e),
+                        fontSize = 20.sp,
+                    )
+                }, selected = false, colors = NavigationDrawerItemDefaults.colors(
+                    unselectedContainerColor = Color(0xFFcaf0f8),
+
+                    ), shape = RectangleShape, onClick = {
+                    navController.navigate(Routes.MarkerList.route)
+                    scope.launch {
+                        state.close()
+                    }
+                })
+            }
+
 
         }
     }) {
@@ -187,7 +191,9 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
 fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navController: NavController) {
 
     val showBottomSheet by mapsViewModel.showBottomSheet.observeAsState(false)
-    Scaffold(topBar = { MapAppTopBar(state = state) }, bottomBar = { }, content = { paddingValues ->
+    Scaffold(topBar = { MapAppTopBar(state = state) },
+        bottomBar = { },
+        content = { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -204,7 +210,7 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navControlle
 
             NavHost(
                 navController = navController as NavHostController,
-                startDestination = Routes.Map.route
+                startDestination = Routes.Login.route
             ) {
                 composable(Routes.Login.route) { LogInScreen(navController, mapsViewModel) }
                 composable(Routes.Map.route) { Map(mapsViewModel) }
@@ -215,6 +221,7 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navControlle
                 }
                 composable(Routes.PhotoScreen.route) { PhotoScreen(navController, mapsViewModel) }
                 composable(Routes.DetailScreen.route) { DetailedScreen(mapsViewModel, navController) }
+                composable(Routes.Register.route) { RegisterScreen(navController, mapsViewModel) }
 
             }
         }

@@ -10,6 +10,7 @@ import com.example.mapsapps.R
 import com.example.mapsapps.firebase.Repository
 import com.example.mapsapps.models.CustomMarker
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.auth.FirebaseAuth
 import java.io.ByteArrayOutputStream
 
 class MapsViewModel : ViewModel() {
@@ -61,6 +62,15 @@ class MapsViewModel : ViewModel() {
     private val _photoTaken = MutableLiveData<Bitmap?>()
     val photoTaken = _photoTaken
 
+    private val auth = FirebaseAuth.getInstance()
+    private val _areWeLoggedIn = MutableLiveData(false)
+    val areWeLoggedIn = _areWeLoggedIn
+
+    private val _email = MutableLiveData<String>()
+    val email = _email
+    private val _password = MutableLiveData<String>()
+    val password = _password
+
 
     fun addMarker(marker: CustomMarker) {
         val updatedMarkers = markers.value?.filter { it != marker }
@@ -68,18 +78,23 @@ class MapsViewModel : ViewModel() {
         repository.addMarker(marker)
         markers.value = updatedMarkers as MutableList<CustomMarker>?
     }
+
     fun setMarkerName(name: String) {
         _markerName.value = name
     }
+
     fun setMarkerDescription(description: String) {
         _markerDescription.value = description
     }
+
     fun setSelectedMarker(marker: CustomMarker) {
         _selectedMarker.value = marker
     }
+
     fun setIconNum(num: Int) {
         _iconNum.value = num
     }
+
     fun setCameraPermission(granted: Boolean) {
         _cameraPermission.value = granted
     }
@@ -106,5 +121,41 @@ class MapsViewModel : ViewModel() {
         repository.deleteImage(marker.image)
         markers.value = updatedMarkers as MutableList<CustomMarker>?
     }
+
+    fun setMail(email: String) {
+        _email.value = email
+    }
+    fun setPassword(password: String) {
+        _password.value = password
+    }
+
+    fun registerUser(email: String, password: String) {
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    TODO("Implement navigation to log IN screen")
+                } else {
+                    TODO("Implement error message")
+                }
+            }
+        TODO("Circular progress bar")
+    }
+
+    fun loginUser(email: String, password: String) {
+        auth.signInWithEmailAndPassword(email!!, password!!)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    TODO("Implement navigation to map screen")
+                } else {
+                    TODO("Implement error message")
+                }
+            }
+        TODO("Circular progress bar")
+    }
+fun logOut(){
+        auth.signOut()
+        TODO("Implement navigation to log IN screen")
+    }
+
 }
 
