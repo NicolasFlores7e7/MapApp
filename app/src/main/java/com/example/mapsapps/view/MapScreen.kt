@@ -436,7 +436,6 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
     val iconsList = mapsViewModel.iconsList
     val context = LocalContext.current
 
-    val selectedIconNum by mapsViewModel.iconNum.observeAsState()
     Column(
         modifier = Modifier
             .fillMaxWidth()

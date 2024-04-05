@@ -78,6 +78,8 @@ class MapsViewModel : ViewModel() {
     val returnToLogIn = _returnToLogIn
     private val _dialogOpener = MutableLiveData(false)
     val dialogOpener = _dialogOpener
+    private val _dialogEditor = MutableLiveData(false)
+    val dialogEditor = _dialogEditor
 
     fun addMarker(marker: CustomMarker) {
         val updatedMarkers = markers.value?.filter { it != marker }
@@ -148,6 +150,9 @@ class MapsViewModel : ViewModel() {
     fun setOpenerDialog(value: Boolean) {
         _dialogOpener.value = value
     }
+    fun setEditorDialog(value: Boolean) {
+        _dialogEditor.value = value
+    }
 
     fun registerUser(email: String, password: String) {
         auth.createUserWithEmailAndPassword(email, password)
@@ -166,15 +171,19 @@ class MapsViewModel : ViewModel() {
     }
 
     fun loginUser(email: String, password: String) {
-        auth.signInWithEmailAndPassword(email!!, password!!)
+        auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    _userId.value = task.result.user?.uid
+                    _userId.value = task.result?.user?.uid
+                    _areWeLoggedIn.value = true
                 } else {
                     _areWeLoggedIn.value = false
-                    _dialogOpener.value = true
-                    Log.d("Error", "Error logging in: ${task.result}")
+                    Log.d("Error", "Error logging in: ${task.exception?.message}")
                 }
+            }
+            .addOnFailureListener{
+                _dialogOpener.value = true
+                Log.d("Error", "Error logging in: ${it.message}")
             }
     }
 

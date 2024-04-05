@@ -138,7 +138,6 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                 onClick = {
                     if (email.isNotEmpty() && password.isNotEmpty() && email.contains("@") && email.contains(".") && password.length >= 6) {
                         mapsViewModel.loginUser(email, password)
-                        mapsViewModel.setLoggedIn(true)
                     }else{
                         mapsViewModel.setOpenerDialog(true)
                     }
