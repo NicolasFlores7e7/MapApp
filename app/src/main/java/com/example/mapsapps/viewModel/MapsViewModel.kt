@@ -11,7 +11,6 @@ import com.example.mapsapps.firebase.Repository
 import com.example.mapsapps.models.CustomMarker
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.auth.FirebaseAuth
-import java.io.ByteArrayOutputStream
 
 class MapsViewModel : ViewModel() {
 
@@ -78,15 +77,19 @@ class MapsViewModel : ViewModel() {
     val returnToLogIn = _returnToLogIn
     private val _dialogOpener = MutableLiveData(false)
     val dialogOpener = _dialogOpener
-    private val _dialogEditor = MutableLiveData(false)
-    val dialogEditor = _dialogEditor
-
+    private val _areWeLoggedInAndRemembered = MutableLiveData(true)
+    val areWeLoggedInAndRemembered = _areWeLoggedInAndRemembered
     fun addMarker(marker: CustomMarker) {
         val updatedMarkers = markers.value?.filter { it != marker }
         _markers.value?.apply { add(marker) }
         repository.addMarker(marker)
         markers.value = updatedMarkers as MutableList<CustomMarker>?
     }
+
+    private val _saveData = MutableLiveData(false)
+    val saveData = _saveData
+    private val _loading = MutableLiveData(true)
+    val loading = _loading
 
     fun setMarkerName(name: String) {
         _markerName.value = name
@@ -144,15 +147,11 @@ class MapsViewModel : ViewModel() {
     fun setReturnToLogIn(value: Boolean) {
         _returnToLogIn.value = value
     }
-    fun setLoggedIn(value: Boolean) {
-        _areWeLoggedIn.value = value
-    }
+
     fun setOpenerDialog(value: Boolean) {
         _dialogOpener.value = value
     }
-    fun setEditorDialog(value: Boolean) {
-        _dialogEditor.value = value
-    }
+
 
     fun registerUser(email: String, password: String) {
         auth.createUserWithEmailAndPassword(email, password)
@@ -168,6 +167,9 @@ class MapsViewModel : ViewModel() {
                 _dialogOpener.value = true
                 Log.d("Error", "Error registering user: ${it.message}")
             }
+    }
+    fun setSaveData(value: Boolean) {
+        _saveData.value = value
     }
 
     fun loginUser(email: String, password: String) {
@@ -185,13 +187,13 @@ class MapsViewModel : ViewModel() {
                 _dialogOpener.value = true
                 Log.d("Error", "Error logging in: ${it.message}")
             }
+
     }
 
     fun logOut() {
         auth.signOut()
         _areWeLoggedIn.value = false
-        _email.value = ""
-        password.value = ""
+        _areWeLoggedInAndRemembered.value = false
     }
 
 }
