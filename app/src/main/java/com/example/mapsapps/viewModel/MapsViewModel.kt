@@ -29,7 +29,6 @@ class MapsViewModel : ViewModel() {
                 Log.w("Firestore", "Listen failed.", error)
                 return@addSnapshotListener
             }
-
             if (snapshot != null && !snapshot.isEmpty) {
                 val markers =
                     snapshot.documents.map { repository.documentToMarker(it) }.toMutableList()
@@ -40,6 +39,7 @@ class MapsViewModel : ViewModel() {
         }
     }
     val markers = _markers
+    val categoryToType = mapOf("Café" to 2131165283, "Bomberos" to 2131165309, "Hospital" to 2131165333, "Aeropuerto" to 2131165270, "Parque" to 2131165379)
     private val _showBottomSheet = MutableLiveData(false)
     val showBottomSheet = _showBottomSheet
     private val _currentLatLng = MutableLiveData<LatLng>()
@@ -89,7 +89,6 @@ class MapsViewModel : ViewModel() {
     private val _saveData = MutableLiveData(false)
     val saveData = _saveData
     private val _loading = MutableLiveData(true)
-    val loading = _loading
 
     fun setMarkerName(name: String) {
         _markerName.value = name
@@ -194,6 +193,38 @@ class MapsViewModel : ViewModel() {
         auth.signOut()
         _areWeLoggedIn.value = false
         _areWeLoggedInAndRemembered.value = false
+    }
+
+    fun handleCategorySelection(category: String) {
+        if (category == "Todos") {
+            getAllMarkers()
+        } else {
+            categoryToType[category]?.let { type ->
+                getMarkersByType(type)
+            }
+        }
+    }
+
+    fun getMarkersByType(type: Int) {
+        repository.getMarkersByType(type).observeForever { markers ->
+            _markers.value = markers.toMutableList()
+        }
+    }
+
+    fun getAllMarkers() {
+        repository.getMarkersFromDataBase().addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Log.w("Firestore", "Listen failed.", error)
+                return@addSnapshotListener
+            }
+            if (snapshot != null && !snapshot.isEmpty) {
+                val markers =
+                    snapshot.documents.map { repository.documentToMarker(it) }.toMutableList()
+                _markers.value = markers
+            } else {
+                Log.d("Firestore", "Current data: null")
+            }
+        }
     }
 
 }

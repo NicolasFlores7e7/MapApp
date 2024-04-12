@@ -11,6 +11,7 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -89,6 +90,21 @@ class Repository {
     fun deleteImage(imageUri: String): Task<Void> {
         val storage = FirebaseStorage.getInstance().getReferenceFromUrl(imageUri)
         return storage.delete()
+    }
+
+    fun getMarkersByType(type: Int): LiveData<List<CustomMarker>> {
+        val liveData = MutableLiveData<List<CustomMarker>>()
+        database.collection("markers")
+            .whereEqualTo("tipo", type)
+            .get()
+            .addOnSuccessListener { documents ->
+                val markers = documents.map { documentToMarker(it) }
+                liveData.value = markers
+            }
+            .addOnFailureListener { exception ->
+                Log.w("Error", "Error getting documents: ", exception)
+            }
+        return liveData
     }
 
 }

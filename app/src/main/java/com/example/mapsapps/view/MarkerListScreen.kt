@@ -3,8 +3,10 @@ package com.example.mapsapps.view
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,15 +14,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,6 +68,14 @@ fun MarkerListItem(mapsViewModel: MapsViewModel, navController: NavController) {
     Column(
         modifier = Modifier, horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Column(
+            modifier = Modifier
+                .padding(start = 120.dp)
+        ) {
+            ExposedDropDownMenuFilter(mapsViewModel)
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
         LazyColumn(
             modifier = Modifier
@@ -158,4 +181,72 @@ fun MarkerItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExposedDropDownMenuFilter(mapsViewModel: MapsViewModel) {
+    var expanded by remember { mutableStateOf(false) }
+    val categories = listOf("Todos", "Café", "Bomberos", "Hospital", "Aeropuerto", "Parque")
+    var selectedText by remember { mutableStateOf("") }
 
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+
+        ) {
+
+        TextField(
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Menu,
+                    contentDescription = "Location",
+                    tint = Color(0xFF03045e)
+                )
+            },
+            placeholder = { Text("Filtrar") },
+            value = selectedText,
+            onValueChange = { selectedText = it },
+            modifier = Modifier
+                .menuAnchor()
+                .width(180.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .border(2.dp, Color(0xFF03045e), RoundedCornerShape(8.dp)),
+            readOnly = true,
+            colors = ExposedDropdownMenuDefaults.textFieldColors(
+                focusedTextColor = Color(0xFF03045e),
+                unfocusedTextColor = Color(0xFF03045e),
+                unfocusedIndicatorColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedPlaceholderColor = Color(0xFF03045e),
+                focusedPlaceholderColor = Color(0xFF03045e),
+
+                )
+
+        )
+
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .background(Color(0xFF8FDEED))
+                .border(2.dp, Color(0xFF03045e), RoundedCornerShape(8.dp))
+
+        ) {
+            categories.forEach { category ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            category,
+                            color = Color(0xFF03045e)
+                        )
+                    },
+                    onClick = {
+                        selectedText = category
+                        expanded = false
+                        mapsViewModel.handleCategorySelection(category)
+                    })
+            }
+        }
+    }
+
+}
