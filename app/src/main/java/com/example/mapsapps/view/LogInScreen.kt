@@ -73,11 +73,17 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
 
     if (storedUserData.value.isNotEmpty() && storedUserData.value[0] != ""
         && storedUserData.value[1] != "" && mapsViewModel.areWeLoggedInAndRemembered.value == true
+        && storedUserData.value[2]==false
     ) {
-        mapsViewModel.setMail(storedUserData.value[0])
-        mapsViewModel.setPassword(storedUserData.value[1])
-        mapsViewModel.loginUser(storedUserData.value[0], storedUserData.value[1])
+        mapsViewModel.setMail(storedUserData.value[0].toString())
+        mapsViewModel.setPassword(storedUserData.value[1].toString())
+        mapsViewModel.loginUser(storedUserData.value[0].toString(), storedUserData.value[1].toString())
     }
+//    if(mapsViewModel.areWeLoggedInAndRemembered.value==false){
+//    CoroutineScope(Dispatchers.IO).launch {
+//                userPrefs.saveUserData("", "", true)
+//            }
+//    }
     Box(
         modifier = Modifier
             .fillMaxSize(),
@@ -194,7 +200,7 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                         mapsViewModel.loginUser(email, password)
                         if (saveData) {
                             CoroutineScope(Dispatchers.IO).launch {
-                                userPrefs.saveUserData(email, password)
+                                userPrefs.saveUserData(email, password, false)
                             }
                         }
                     } else {

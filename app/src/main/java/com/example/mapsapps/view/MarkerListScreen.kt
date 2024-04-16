@@ -173,6 +173,7 @@ fun MarkerItem(
                 ) {
                     Text(text = "Eliminar marcador")
                 }
+                
 
             }
 
@@ -198,7 +199,7 @@ fun ExposedDropDownMenuFilter(mapsViewModel: MapsViewModel) {
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Filled.Menu,
-                    contentDescription = "Location",
+                    contentDescription = "Menu",
                     tint = Color(0xFF03045e)
                 )
             },

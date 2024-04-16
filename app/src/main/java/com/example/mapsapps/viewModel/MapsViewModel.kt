@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.mapsapps.R
+import com.example.mapsapps.data.UserPrefs
 import com.example.mapsapps.firebase.Repository
 import com.example.mapsapps.models.CustomMarker
 import com.google.android.gms.maps.model.LatLng
@@ -77,7 +78,9 @@ class MapsViewModel : ViewModel() {
     val returnToLogIn = _returnToLogIn
     private val _dialogOpener = MutableLiveData(false)
     val dialogOpener = _dialogOpener
-    private val _areWeLoggedInAndRemembered = MutableLiveData(true)
+    private val _editDialogOpener = MutableLiveData(false)
+    val editDialogOpener = _editDialogOpener
+    private val _areWeLoggedInAndRemembered = MutableLiveData(false)
     val areWeLoggedInAndRemembered = _areWeLoggedInAndRemembered
     fun addMarker(marker: CustomMarker) {
         val updatedMarkers = markers.value?.filter { it != marker }
@@ -126,11 +129,21 @@ class MapsViewModel : ViewModel() {
         return repository.uploadImage(imageUri)
     }
 
+//    fun editMarker(marker: CustomMarker, newMarker: CustomMarker) {
+//        val updatedMarkers = markers.value?.map { if (it == newMarker) marker else it }
+//        repository.addMarker(newMarker)
+//        repository.removeMarker(marker)
+//        markers.value = updatedMarkers as MutableList<CustomMarker>?
+//    }
     fun deleteMarker(marker: CustomMarker) {
         val updatedMarkers = markers.value?.filter { it != marker }
         repository.removeMarker(marker)
         repository.deleteImage(marker.image)
         markers.value = updatedMarkers as MutableList<CustomMarker>?
+    }
+
+    fun setEditDialogOpener(value: Boolean) {
+        _editDialogOpener.value = value
     }
 
     fun setMail(email: String) {
@@ -159,12 +172,12 @@ class MapsViewModel : ViewModel() {
                     _returnToLogIn.value = true
                 }else{
                     _returnToLogIn.value = false
-                    Log.d("Error", "Error registering user: ${task.exception?.message}")
+                    Log.d("Error algo mas", "Error registering user: ${task.exception?.message}")
                 }
             }
             .addOnFailureListener {
                 _dialogOpener.value = true
-                Log.d("Error", "Error registering user: ${it.message}")
+                Log.d("Error algo mas", "Error registering user: ${it.message}")
             }
     }
     fun setSaveData(value: Boolean) {
