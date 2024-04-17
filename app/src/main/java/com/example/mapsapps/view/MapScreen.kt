@@ -58,6 +58,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -88,6 +89,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.mapsapps.MainActivity
 import com.example.mapsapps.R
+import com.example.mapsapps.data.UserPrefs
 import com.example.mapsapps.models.CustomMarker
 import com.example.mapsapps.navigations.Routes
 import com.example.mapsapps.viewModel.MapsViewModel
@@ -106,6 +108,8 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -116,6 +120,7 @@ import java.io.FileOutputStream
 @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
 fun MapAppDrawer(mapsViewModel: MapsViewModel) {
+    val userPrefs = UserPrefs(LocalContext.current)
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     val state: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -183,7 +188,11 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
                         )
                     }, selected = false, colors = NavigationDrawerItemDefaults.colors(
                         unselectedContainerColor = Color(0xFFcaf0f8),
-                    ), shape = RectangleShape, onClick = {
+                    ), shape = RectangleShape,
+                        onClick = {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            userPrefs.saveDidWeLogout(true)
+                        }
                         navController.navigate(Routes.Login.route)
                         mapsViewModel.logOut()
                         scope.launch {

@@ -17,22 +17,33 @@ class UserPrefs(private val context: Context){
     companion object{
         val STORE_EMAIL = stringPreferencesKey("store_email")
         val STORE_PASSWORD = stringPreferencesKey("store_password")
-        val STORE_DIDWELOGOUT = booleanPreferencesKey("store_didweLogout")
+        val STORE_DIDWELOGOUT = booleanPreferencesKey("store_didWeLogout")
     }
 
-    val getUserData: Flow<List<Any>> = context.dataStore.data.map { prefs ->
+
+    val getUserData: Flow<List<String>> = context.dataStore.data.map { prefs ->
         listOf(
             prefs[STORE_EMAIL] ?: "",
             prefs[STORE_PASSWORD] ?: "",
-            prefs[STORE_DIDWELOGOUT] ?: false
+
         )
     }
 
-    suspend fun saveUserData(email: String, password: String, didWeLogout: Boolean){
+    val getUserStatus: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[STORE_DIDWELOGOUT] ?: false
+    }
+
+    suspend fun saveUserData(email: String, password: String){
         context.dataStore.edit { prefs ->
             prefs[STORE_EMAIL] = email
             prefs[STORE_PASSWORD] = password
+        }
+    }
+
+    suspend fun saveDidWeLogout(didWeLogout: Boolean){
+        context.dataStore.edit { prefs ->
             prefs[STORE_DIDWELOGOUT] = didWeLogout
         }
     }
+
 }

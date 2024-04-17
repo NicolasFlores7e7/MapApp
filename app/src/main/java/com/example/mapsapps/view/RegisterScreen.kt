@@ -175,6 +175,7 @@ fun RegisterScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                             ) && email.contains(".")
                         ) {
                             mapsViewModel.registerUser(email, password)
+                            mapsViewModel.setReturnToLogIn(true)
                             if (returnToLogIn) {
                                 navController.navigate(Routes.Login.route)
                                 mapsViewModel.email.value = ""

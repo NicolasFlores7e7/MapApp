@@ -64,26 +64,27 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
     val context = LocalContext.current
     val userPrefs = UserPrefs(context)
     val storedUserData = userPrefs.getUserData.collectAsState(initial = emptyList())
+    val storedUserStatus = userPrefs.getUserStatus.collectAsState(initial = false)
     val email by mapsViewModel.email.observeAsState("")
     val password by mapsViewModel.password.observeAsState("")
-    var passwordVisivility by remember { mutableStateOf(false) }
+    var passwordVisibility by remember { mutableStateOf(false) }
     val areWeLoggedIn by mapsViewModel.areWeLoggedIn.observeAsState(false)
     val saveData by mapsViewModel.saveData.observeAsState(false)
 
-
+    println("Estado de la variable didweloggedout: ${storedUserStatus.value}")
     if (storedUserData.value.isNotEmpty() && storedUserData.value[0] != ""
         && storedUserData.value[1] != "" && mapsViewModel.areWeLoggedInAndRemembered.value == true
-        && storedUserData.value[2]==false
     ) {
-        mapsViewModel.setMail(storedUserData.value[0].toString())
-        mapsViewModel.setPassword(storedUserData.value[1].toString())
-        mapsViewModel.loginUser(storedUserData.value[0].toString(), storedUserData.value[1].toString())
+        mapsViewModel.setMail(storedUserData.value[0])
+        mapsViewModel.setPassword(storedUserData.value[1])
     }
-//    if(mapsViewModel.areWeLoggedInAndRemembered.value==false){
-//    CoroutineScope(Dispatchers.IO).launch {
-//                userPrefs.saveUserData("", "", true)
-//            }
-//    }
+
+    if (!storedUserStatus.value) {
+        mapsViewModel.areWeLoggedIn.value = true
+        mapsViewModel.loginUser(storedUserData.value[0], storedUserData.value[1])
+
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize(),
@@ -149,12 +150,12 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                     unfocusedTextColor = Color(0xFF03045e),
 
                     ),
-                visualTransformation = if (passwordVisivility) VisualTransformation.None else PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     IconButton(
-                        onClick = { passwordVisivility = !passwordVisivility }) {
+                        onClick = { passwordVisibility = !passwordVisibility }) {
                         Icon(
-                            imageVector = if (passwordVisivility) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            imageVector = if (passwordVisibility) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             contentDescription = "visibility",
                             tint = Color(0xFF03045e)
                         )
@@ -197,12 +198,14 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                             "."
                         ) && password.length >= 6
                     ) {
-                        mapsViewModel.loginUser(email, password)
                         if (saveData) {
                             CoroutineScope(Dispatchers.IO).launch {
-                                userPrefs.saveUserData(email, password, false)
+                                userPrefs.saveUserData(email, password)
                             }
                         }
+                        mapsViewModel.loginUser(email, password)
+
+
                     } else {
                         mapsViewModel.setOpenerDialog(true)
                     }

@@ -79,8 +79,7 @@ class MapsViewModel : ViewModel() {
     private val _dialogOpener = MutableLiveData(false)
     val dialogOpener = _dialogOpener
     private val _editDialogOpener = MutableLiveData(false)
-    val editDialogOpener = _editDialogOpener
-    private val _areWeLoggedInAndRemembered = MutableLiveData(false)
+    private val _areWeLoggedInAndRemembered = MutableLiveData(true)
     val areWeLoggedInAndRemembered = _areWeLoggedInAndRemembered
     fun addMarker(marker: CustomMarker) {
         val updatedMarkers = markers.value?.filter { it != marker }
@@ -91,7 +90,6 @@ class MapsViewModel : ViewModel() {
 
     private val _saveData = MutableLiveData(false)
     val saveData = _saveData
-    private val _loading = MutableLiveData(true)
 
     fun setMarkerName(name: String) {
         _markerName.value = name
