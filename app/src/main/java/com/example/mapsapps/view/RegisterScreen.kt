@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -33,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -96,7 +98,10 @@ fun RegisterScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                     focusedTextColor = Color(0xFF03045e),
                     unfocusedTextColor = Color(0xFF03045e),
 
-                    )
+                    ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email
+                )
 
             )
             OutlinedTextField(
@@ -116,6 +121,9 @@ fun RegisterScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                     unfocusedTextColor = Color(0xFF03045e),
 
                     ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password
+                ),
                 visualTransformation = if (passwordVisivility) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     IconButton(
@@ -148,6 +156,9 @@ fun RegisterScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                     unfocusedTextColor = Color(0xFF03045e),
 
                     ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password
+                ),
                 visualTransformation = if (passwordVisivility) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     IconButton(

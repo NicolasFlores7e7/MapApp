@@ -7,7 +7,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.mapsapps.R
-import com.example.mapsapps.data.UserPrefs
 import com.example.mapsapps.firebase.Repository
 import com.example.mapsapps.models.CustomMarker
 import com.google.android.gms.maps.model.LatLng
@@ -40,7 +39,7 @@ class MapsViewModel : ViewModel() {
         }
     }
     val markers = _markers
-    val categoryToType = mapOf("Café" to 2131165283, "Bomberos" to 2131165309, "Hospital" to 2131165333, "Aeropuerto" to 2131165270, "Parque" to 2131165379)
+    private val categoryToType = mapOf("Café" to 2131165283, "Bomberos" to 2131165309, "Hospital" to 2131165333, "Aeropuerto" to 2131165270, "Parque" to 2131165379)
     private val _showBottomSheet = MutableLiveData(false)
     val showBottomSheet = _showBottomSheet
     private val _currentLatLng = MutableLiveData<LatLng>()
@@ -127,12 +126,6 @@ class MapsViewModel : ViewModel() {
         return repository.uploadImage(imageUri)
     }
 
-//    fun editMarker(marker: CustomMarker, newMarker: CustomMarker) {
-//        val updatedMarkers = markers.value?.map { if (it == newMarker) marker else it }
-//        repository.addMarker(newMarker)
-//        repository.removeMarker(marker)
-//        markers.value = updatedMarkers as MutableList<CustomMarker>?
-//    }
     fun deleteMarker(marker: CustomMarker) {
         val updatedMarkers = markers.value?.filter { it != marker }
         repository.removeMarker(marker)
@@ -216,13 +209,13 @@ class MapsViewModel : ViewModel() {
         }
     }
 
-    fun getMarkersByType(type: Int) {
+    private fun getMarkersByType(type: Int) {
         repository.getMarkersByType(type).observeForever { markers ->
             _markers.value = markers.toMutableList()
         }
     }
 
-    fun getAllMarkers() {
+    private fun getAllMarkers() {
         repository.getMarkersFromDataBase().addSnapshotListener { snapshot, error ->
             if (error != null) {
                 Log.w("Firestore", "Listen failed.", error)

@@ -58,7 +58,6 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -76,7 +75,6 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -147,49 +145,50 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
 
             }
 
-                NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp), label = {
-                    Text(
-                        text = "Mapa",
-                        color = Color(0xFF03045e),
-                        fontSize = 20.sp,
-                    )
-                }, selected = false, colors = NavigationDrawerItemDefaults.colors(
-                    unselectedContainerColor = Color(0xFFcaf0f8),
-                ), shape = RectangleShape, onClick = {
-                    navController.navigate(Routes.Map.route)
-                    scope.launch {
-                        state.close()
-                    }
-                })
-                NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp), label = {
-                    Text(
-                        text = "Lista de marcadores",
-                        color = Color(0xFF03045e),
-                        fontSize = 20.sp,
-                    )
-                }, selected = false, colors = NavigationDrawerItemDefaults.colors(
-                    unselectedContainerColor = Color(0xFFcaf0f8),
+            NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp), label = {
+                Text(
+                    text = "Mapa",
+                    color = Color(0xFF03045e),
+                    fontSize = 20.sp,
+                )
+            }, selected = false, colors = NavigationDrawerItemDefaults.colors(
+                unselectedContainerColor = Color(0xFFcaf0f8),
+            ), shape = RectangleShape, onClick = {
+                navController.navigate(Routes.Map.route)
+                scope.launch {
+                    state.close()
+                }
+            })
+            NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp), label = {
+                Text(
+                    text = "Lista de marcadores",
+                    color = Color(0xFF03045e),
+                    fontSize = 20.sp,
+                )
+            }, selected = false, colors = NavigationDrawerItemDefaults.colors(
+                unselectedContainerColor = Color(0xFFcaf0f8),
 
-                    ), shape = RectangleShape, onClick = {
-                    navController.navigate(Routes.MarkerList.route)
-                    scope.launch {
-                        state.close()
-                    }
-                })
-                Column(modifier = Modifier
+                ), shape = RectangleShape, onClick = {
+                navController.navigate(Routes.MarkerList.route)
+                scope.launch {
+                    state.close()
+                }
+            })
+            Column(
+                modifier = Modifier
                     .fillMaxSize(),
-                    verticalArrangement = Arrangement.Bottom,
-                ){
-                    NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp), label = {
-                        Text(
-                            text = "Cerrar sesión",
-                            color = Color(0xFF03045e),
-                            fontSize = 20.sp,
-                        )
-                    }, selected = false, colors = NavigationDrawerItemDefaults.colors(
-                        unselectedContainerColor = Color(0xFFcaf0f8),
-                    ), shape = RectangleShape,
-                        onClick = {
+                verticalArrangement = Arrangement.Bottom,
+            ) {
+                NavigationDrawerItem(modifier = Modifier.padding(top = 8.dp), label = {
+                    Text(
+                        text = "Cerrar sesión",
+                        color = Color(0xFF03045e),
+                        fontSize = 20.sp,
+                    )
+                }, selected = false, colors = NavigationDrawerItemDefaults.colors(
+                    unselectedContainerColor = Color(0xFFcaf0f8),
+                ), shape = RectangleShape,
+                    onClick = {
                         CoroutineScope(Dispatchers.IO).launch {
                             userPrefs.saveDidWeLogout(true)
                         }
@@ -199,9 +198,8 @@ fun MapAppDrawer(mapsViewModel: MapsViewModel) {
                             state.close()
                         }
                     })
-                }
             }
-
+        }
 
 
     }) {
@@ -220,39 +218,54 @@ fun MapAppScafold(state: DrawerState, mapsViewModel: MapsViewModel, navControlle
     Scaffold(topBar = { MapAppTopBar(state, mapsViewModel) },
         bottomBar = { },
         content = { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color(0xFFcaf0f8))
-        ) {
-            if (showBottomSheet) {
-                BottomSheet(
-                    onDismiss = { mapsViewModel.showBottomSheet.value = false },
-                    mapsViewModel = mapsViewModel,
-                    navController = navController
-                )
-            }
-
-            NavHost(
-                navController = navController as NavHostController,
-                startDestination = Routes.Login.route
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(Color(0xFFcaf0f8))
             ) {
-                composable(Routes.Login.route) { LogInScreen(navController, mapsViewModel) }
-                composable(Routes.Map.route) { Map(mapsViewModel) }
-                composable(Routes.MarkerList.route) {
-                    MarkerListScreen(
-                        navController, mapsViewModel
+                if (showBottomSheet) {
+                    BottomSheet(
+                        onDismiss = { mapsViewModel.showBottomSheet.value = false },
+                        mapsViewModel = mapsViewModel,
+                        navController = navController
                     )
                 }
-                composable(Routes.PhotoScreen.route) { PhotoScreen(navController, mapsViewModel) }
-                composable(Routes.DetailScreen.route) { DetailedScreen(mapsViewModel, navController) }
-                composable(Routes.Register.route) { RegisterScreen(navController, mapsViewModel) }
 
+                NavHost(
+                    navController = navController as NavHostController,
+                    startDestination = Routes.Login.route
+                ) {
+                    composable(Routes.Login.route) { LogInScreen(navController, mapsViewModel) }
+                    composable(Routes.Map.route) { Map(mapsViewModel) }
+                    composable(Routes.MarkerList.route) {
+                        MarkerListScreen(
+                            navController, mapsViewModel
+                        )
+                    }
+                    composable(Routes.PhotoScreen.route) {
+                        PhotoScreen(
+                            navController,
+                            mapsViewModel
+                        )
+                    }
+                    composable(Routes.DetailScreen.route) {
+                        DetailedScreen(
+                            mapsViewModel,
+                            navController
+                        )
+                    }
+                    composable(Routes.Register.route) {
+                        RegisterScreen(
+                            navController,
+                            mapsViewModel
+                        )
+                    }
+
+                }
             }
-        }
 
-    }
+        }
 
 
     )
@@ -273,7 +286,7 @@ fun MapAppTopBar(state: DrawerState, mapsViewModel: MapsViewModel) {
     }, colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
         containerColor = Color(0xFF90e0ef),
     ), navigationIcon = {
-        if(areWeLoggedIn.value==true){
+        if (areWeLoggedIn.value == true) {
             IconButton(onClick = {
                 scope.launch {
                     state.open()
@@ -360,7 +373,7 @@ fun Map(mapsViewModel: MapsViewModel) {
                         mapsViewModel.showBottomSheet.value = true
                         mapsViewModel.currentLatLng.value = it
                     }) {
-                   markers.filter{ it.owner == userId}.forEach { newMarker ->
+                    markers.filter { it.owner == userId }.forEach { newMarker ->
                         Marker(
                             state = MarkerState(
                                 position = newMarker.position,
@@ -398,7 +411,46 @@ fun Map(mapsViewModel: MapsViewModel) {
 
 
     } else {
-        Text(text = "Permission required")
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(0.8f),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Se requieren permisos para utilizar la App",
+                    color = Color(0xFF03045e),
+                    fontSize = 20.sp,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        openAppSettings(context as Activity)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF8FDEED),
+                        contentColor = Color(0xFF03045e)
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "Abrir configuración",
+                        color = Color(0xFF03045e),
+                        fontSize = 20.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+            }
+        }
+
+
     }
 }
 
@@ -464,18 +516,21 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
         )
         Spacer(modifier = Modifier.padding(4.dp))
 
-        TextField(value = snippet, onValueChange = { mapsViewModel.setMarkerDescription(it) }, placeholder = {
-            Text(
-                "Descripción del marcador", color = Color(0xFF03045e)
+        TextField(value = snippet,
+            onValueChange = { mapsViewModel.setMarkerDescription(it) },
+            placeholder = {
+                Text(
+                    "Descripción del marcador", color = Color(0xFF03045e)
+                )
+            },
+            colors = TextFieldDefaults.colors(
+                cursorColor = Color(0xFF03045e),
+                focusedIndicatorColor = Color(0xFFcaf0f8),
+                unfocusedIndicatorColor = Color(0xFFcaf0f8),
+                unfocusedContainerColor = Color(0xFFcaf0f8),
+                focusedContainerColor = Color(0xFFcaf0f8),
+                focusedTextColor = Color(0xFF03045e),
             )
-        }, colors = TextFieldDefaults.colors(
-            cursorColor = Color(0xFF03045e),
-            focusedIndicatorColor = Color(0xFFcaf0f8),
-            unfocusedIndicatorColor = Color(0xFFcaf0f8),
-            unfocusedContainerColor = Color(0xFFcaf0f8),
-            focusedContainerColor = Color(0xFFcaf0f8),
-            focusedTextColor = Color(0xFF03045e),
-        )
         )
 
         Spacer(modifier = Modifier.padding(8.dp))
@@ -532,7 +587,12 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
                         mapsViewModel.setMarkerName("")
                         mapsViewModel.setMarkerDescription("")
                         mapsViewModel.setIconNum(0)
-                        mapsViewModel.addPhotoTaken(BitmapFactory.decodeResource(context.resources, R.drawable.no_image))
+                        mapsViewModel.addPhotoTaken(
+                            BitmapFactory.decodeResource(
+                                context.resources,
+                                R.drawable.no_image
+                            )
+                        )
                     }
                 }
             }, colors = ButtonDefaults.buttonColors(
@@ -544,6 +604,7 @@ fun MarkerCreator(mapsViewModel: MapsViewModel, navController: NavController) {
         Spacer(modifier = Modifier.padding(8.dp))
     }
 }
+
 fun byteArrayToUri(context: Context, byteArray: ByteArray): Uri {
     val tempFile = File.createTempFile("image", null, context.cacheDir).apply {
         deleteOnExit()
@@ -568,6 +629,9 @@ fun CameraScreen(navController: NavController, mapsViewModel: MapsViewModel) {
         onResult = { isGranted ->
             if (isGranted) {
                 mapsViewModel.setCameraPermission(true)
+                navController.navigate(Routes.PhotoScreen.route)
+                mapsViewModel.showBottomSheet.value = false
+
             } else {
                 mapsViewModel.setShouldPermRationale(
                     shouldShowRequestPermissionRationale(
@@ -630,21 +694,33 @@ fun PermissionDeclinedScreen() {
 
     ) {
         Text(
-            text = "Permission required to take photos", fontWeight = FontWeight.Bold
+            text = "Se requieren permisos para utilizar tomar fotos",
+            color = Color(0xFF03045e),
+            fontSize = 20.sp,
+            textAlign = TextAlign.Center
         )
-        Text(
-            text = "This app need access to your camera to take photos"
-        )
-        Button(onClick = {
-            openAppSettings(context as Activity)
-        }) {
-            Text(text = "Accept")
+
+        Button(
+            onClick = {
+                openAppSettings(context as Activity)
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFcaf0f8),
+                contentColor = Color(0xFF03045e)
+            ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(
+                text = "Abrir configuración",
+                color = Color(0xFF03045e),
+                fontSize = 20.sp,
+                textAlign = TextAlign.Center
+            )
         }
+
 
     }
 }
-
-
 fun openAppSettings(activity: Activity) {
     val intent = Intent().apply {
         action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS

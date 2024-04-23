@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -64,14 +66,12 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
     val context = LocalContext.current
     val userPrefs = UserPrefs(context)
     val storedUserData = userPrefs.getUserData.collectAsState(initial = emptyList())
-    val storedUserStatus = userPrefs.getUserStatus.collectAsState(initial = false)
     val email by mapsViewModel.email.observeAsState("")
     val password by mapsViewModel.password.observeAsState("")
     var passwordVisibility by remember { mutableStateOf(false) }
     val areWeLoggedIn by mapsViewModel.areWeLoggedIn.observeAsState(false)
     val saveData by mapsViewModel.saveData.observeAsState(false)
 
-    println("Estado de la variable didweloggedout: ${storedUserStatus.value}")
     if (storedUserData.value.isNotEmpty() && storedUserData.value[0] != ""
         && storedUserData.value[1] != "" && mapsViewModel.areWeLoggedInAndRemembered.value == true
     ) {
@@ -79,10 +79,11 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
         mapsViewModel.setPassword(storedUserData.value[1])
     }
 
-    if (!storedUserStatus.value) {
-        mapsViewModel.areWeLoggedIn.value = true
-        mapsViewModel.loginUser(storedUserData.value[0], storedUserData.value[1])
 
+    LaunchedEffect(areWeLoggedIn) {
+        if (areWeLoggedIn == true) {
+            navController.navigate(Routes.Map.route)
+        }
     }
 
     Box(
@@ -130,7 +131,10 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                     focusedTextColor = Color(0xFF03045e),
                     unfocusedTextColor = Color(0xFF03045e),
 
-                    )
+                    ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email
+                )
 
             )
             OutlinedTextField(
@@ -150,6 +154,9 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
                     unfocusedTextColor = Color(0xFF03045e),
 
                     ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password
+                ),
                 visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
                     IconButton(
@@ -218,11 +225,7 @@ fun LogInScreen(navController: NavController, mapsViewModel: MapsViewModel) {
             ) {
                 Text(text = "Iniciar sesión")
             }
-            LaunchedEffect(areWeLoggedIn) {
-                if (areWeLoggedIn == true) {
-                    navController.navigate(Routes.Map.route)
-                }
-            }
+
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.padding(bottom = 16.dp)) {
                 Text(
